@@ -1,0 +1,58 @@
+global proc AEpointHelperTemplate(string $nodeName)
+{
+    
+    editorTemplate -beginScrollLayout;
+        
+        editorTemplate -beginLayout "Point Helper Attributes" -collapse false;
+		
+			editorTemplate -addControl "size";
+			editorTemplate -addControl "drawOnTop";
+			editorTemplate -addControl "fill";
+			editorTemplate -addControl "shaded";
+			editorTemplate -addControl "centerMarker";
+			editorTemplate -addControl "axisTripod";
+			editorTemplate -addControl "cross";
+			editorTemplate -addControl "square";
+			editorTemplate -addControl "box";
+			editorTemplate -addControl "diamond";
+			editorTemplate -addControl "disc";
+			editorTemplate -addControl "arrow";
+			editorTemplate -addControl "notch";
+			editorTemplate -addControl "tearDrop";
+			editorTemplate -addControl "cylinder";
+			editorTemplate -addControl "sphere";
+			editorTemplate -addControl "custom";
+        
+        editorTemplate -endLayout;
+		
+		editorTemplate -beginLayout "Text Attributes" -collapse true;
+			
+			editorTemplate -addControl "choice";
+			editorTemplate -addControl "fontSize";
+			editorTemplate -addControl "text";
+        
+        editorTemplate -endLayout;
+		
+		editorTemplate -beginLayout "Object Transform Attributes" -collapse false;
+            
+            editorTemplate -addControl "localPosition";
+			editorTemplate -addControl "localRotate";
+			editorTemplate -addControl "localScale";
+        
+        editorTemplate -endLayout;
+		
+		editorTemplate -addControl "controlPoints";
+        
+		editorTemplate -suppress "objectMatrix";
+		editorTemplate -suppress "objectInverseMatrix";
+		editorTemplate -suppress "objectWorldMatrix";
+		editorTemplate -suppress "objectWorldInverseMatrix";
+		
+		AElocatorInclude $nodeName;
+        AEdependNodeTemplate $nodeName;
+        
+        editorTemplate -addExtraControls;
+        
+    editorTemplate -endScrollLayout;
+    
+}
