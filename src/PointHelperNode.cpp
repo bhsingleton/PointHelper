@@ -44,7 +44,7 @@ MObject	PointHelper::objectInverseMatrix;
 MObject	PointHelper::objectWorldMatrix;
 MObject	PointHelper::objectWorldInverseMatrix;
 
-MTypeId PointHelper::id(0x00131800);
+MTypeId PointHelper::id(0x0013b1c0);
 MString	PointHelper::drawableCategory("Drawable");
 MString	PointHelper::drawDbClassification("drawdb/geometry/PointHelper");
 MString	PointHelper::drawRegistrantId("PointHelperNodePlugin");
