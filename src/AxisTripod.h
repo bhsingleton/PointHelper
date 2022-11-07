@@ -1,16 +1,15 @@
-#ifndef _AXIS_TRIPOD
-#define _AXIS_TRIPOD
+#ifndef _AXIS_TRIPOD_DRAWABLE
+#define _AXIS_TRIPOD_DRAWABLE
 //
 // File: AxisTripod.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class AxisTripod : public Drawable 
+class AxisTripod : public Drawable::AbstractDrawable
 {
 
 public:
@@ -50,5 +49,4 @@ private:
 	};
 
 };
-
 #endif

@@ -13,7 +13,7 @@ double	Cylinder::CYLINDER_LENGTH = 1.0;
 int		Cylinder::SUBDIVISIONS_AXIS = 40;
 
 
-Cylinder::Cylinder()
+Cylinder::Cylinder() : Drawable::AbstractDrawable()
 /**
 Constructor.
 */
@@ -31,7 +31,7 @@ Constructor.
 		MFnMeshData fnMeshData;
 		Cylinder::MESH_DATA = fnMeshData.create();
 
-		DrawableUtilities::cylinder(MVector::zero, MVector::xAxis, Cylinder::CYLINDER_RADIUS, Cylinder::CYLINDER_LENGTH, Cylinder::SUBDIVISIONS_AXIS, Cylinder::MESH_DATA);
+		Drawable::cylinder(MVector::zero, MVector::xAxis, Cylinder::CYLINDER_RADIUS, Cylinder::CYLINDER_LENGTH, Cylinder::SUBDIVISIONS_AXIS, Cylinder::MESH_DATA);
 
 	}
 	
@@ -58,25 +58,25 @@ Prepares to draw a cylinder.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Cylinder::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Cylinder::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Extrapolate data from mesh
 	//
-	DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	Drawable::getTriangles(meshData, this->triangles, this->normals);
 
 	// Build array for wireframe
 	//
 	std::vector<MPointArray> points(6);
-	points[0] = DrawableUtilities::circle(MVector(0.5, 0.0, 0.0), MVector::xAxis, CYLINDER_RADIUS, SUBDIVISIONS_AXIS + 1);
-	points[1] = DrawableUtilities::circle(MVector(-0.5, 0.0, 0.0), MVector::xAxis, CYLINDER_RADIUS, SUBDIVISIONS_AXIS + 1);
-	points[2] = DrawableUtilities::line(MPoint((CYLINDER_LENGTH * 0.5), CYLINDER_RADIUS, 0.0, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), CYLINDER_RADIUS, 0.0, 1.0));
-	points[3] = DrawableUtilities::line(MPoint((CYLINDER_LENGTH * 0.5), -CYLINDER_RADIUS, 0.0, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), -CYLINDER_RADIUS, 0.0, 1.0));
-	points[4] = DrawableUtilities::line(MPoint((CYLINDER_LENGTH * 0.5), 0.0, CYLINDER_RADIUS, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), 0.0, CYLINDER_RADIUS, 1.0));
-	points[5] = DrawableUtilities::line(MPoint((CYLINDER_LENGTH * 0.5), 0.0, -CYLINDER_RADIUS, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), 0.0, -CYLINDER_RADIUS, 1.0));
+	points[0] = Drawable::circle(MVector(0.5, 0.0, 0.0), MVector::xAxis, CYLINDER_RADIUS, SUBDIVISIONS_AXIS + 1);
+	points[1] = Drawable::circle(MVector(-0.5, 0.0, 0.0), MVector::xAxis, CYLINDER_RADIUS, SUBDIVISIONS_AXIS + 1);
+	points[2] = Drawable::line(MPoint((CYLINDER_LENGTH * 0.5), CYLINDER_RADIUS, 0.0, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), CYLINDER_RADIUS, 0.0, 1.0));
+	points[3] = Drawable::line(MPoint((CYLINDER_LENGTH * 0.5), -CYLINDER_RADIUS, 0.0, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), -CYLINDER_RADIUS, 0.0, 1.0));
+	points[4] = Drawable::line(MPoint((CYLINDER_LENGTH * 0.5), 0.0, CYLINDER_RADIUS, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), 0.0, CYLINDER_RADIUS, 1.0));
+	points[5] = Drawable::line(MPoint((CYLINDER_LENGTH * 0.5), 0.0, -CYLINDER_RADIUS, 1.0), MPoint(-(CYLINDER_LENGTH * 0.5), 0.0, -CYLINDER_RADIUS, 1.0));
 
-	this->lines = DrawableUtilities::stagger(points);
-	DrawableUtilities::transform(pointHelperData->objectMatrix, this->lines);
+	this->lines = Drawable::stagger(points);
+	Drawable::transform(pointHelperData->objectMatrix, this->lines);
 
 };
 

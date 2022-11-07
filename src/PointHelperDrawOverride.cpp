@@ -11,7 +11,7 @@
 #include "Box.h"
 #include "CenterMarker.h"
 #include "Cross.h"
-#include "custom.h"
+#include "Custom.h"
 #include "Cylinder.h"
 #include "Diamond.h"
 #include "Disc.h"
@@ -31,37 +31,31 @@ Constructor.
 */
 {
 
+	MStatus status;
+
 	// Create model editor callback
 	//
-	this->modelEditorChangedCallbackId = MEventMessage::addEventCallback("modelEditorChanged", PointHelperDrawOverride::onModelEditorChanged, this);
+	this->modelEditorChangedCallbackId = MEventMessage::addEventCallback("modelEditorChanged", PointHelperDrawOverride::onModelEditorChanged, this, &status);
+	CHECK_MSTATUS(status);
 
 	// Store pointer to MPxLocator
 	// This will be useful for getting plug data to pass into our MPxUserData class
 	//
-	MStatus status;
-
 	MFnDependencyNode fnNode(node, &status);
 	CHECK_MSTATUS(status);
 
 	this->pointHelper = status ? dynamic_cast<PointHelper*>(fnNode.userNode()) : nullptr;
 
-	if (this->pointHelper == nullptr) 
-	{
-
-		return;
-
-	}
-
 	// Check if drawables have been initialized
 	//
 	size_t numItems = this->drawables.size();
 
-	if (numItems == 0) 
+	if (numItems == 0 && this->pointHelper != nullptr)
 	{
 
 		// Create new dicationary
 		//
-		this->drawables = std::map<std::string, Drawable*>();
+		this->drawables = std::map<std::string, Drawable::AbstractDrawable*>();
 
 		// Add drawables to dictionary
 		//
@@ -249,105 +243,41 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 	if (!pointHelperData) 
 	{
 
-		pointHelperData = new PointHelperData();
+		pointHelperData = this->pointHelper->getUserData();
 
 	}
 
-	// Store object matrix
+	// Cache internal values
 	//
-	MMatrix objectMatrix = this->pointHelper->getObjectMatrix();
-	MMatrix objectWorldMatrix = this->pointHelper->getObjectWorldMatrix();
-
-	pointHelperData->objectMatrix = objectMatrix;
-	pointHelperData->objectWorldMatrix = objectWorldMatrix;
-
-	// Get draw properties
-	//
-	MObject node = pointHelper->thisMObject();
-
-	pointHelperData->drawOnTop = PointHelper::getBooleanValue(node, PointHelper::drawOnTop);
-	pointHelperData->fill = PointHelper::getBooleanValue(node, PointHelper::fill);
-	pointHelperData->shaded = PointHelper::getBooleanValue(node, PointHelper::shaded);
-	pointHelperData->text = pointHelper->getTextChoice();
-	pointHelperData->fontSize = PointHelper::getIntegerValue(node, PointHelper::fontSize);
-	pointHelperData->lineWidth = PointHelper::getFloatValue(node, PointHelper::lineWidth);
-	pointHelperData->wireColor = MHWRender::MGeometryUtilities::wireframeColor(objPath);
-
-	// Get correct depth priority
-	//
-	MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(objPath);
-
-	switch (displayStatus) 
-	{
-
-		case MHWRender::DisplayStatus::kActiveComponent:
-
-			pointHelperData->depthPriority = MHWRender::MRenderItem::sActiveWireDepthPriority;
-			break;
-
-		default:
-
-			pointHelperData->depthPriority = MHWRender::MRenderItem::sDormantFilledDepthPriority;
-			break;
-
-	}
-
-	// Collect drawable attributes
-	//
-	MObjectArray attributes;
-
-	status = this->pointHelper->getAttributesByCategory(PointHelper::drawableCategory, attributes);
-	CHECK_MSTATUS(status);
+	pointHelperData->dirtyCurrentText();
+	pointHelperData->dirtyObjectMatrix();
+	pointHelperData->cacheWireColor(objPath);
+	pointHelperData->cacheDepthPriority(objPath);
 
 	// Iterate through drawable attributes
 	//
-	MFnAttribute fnAttribute;
+	Drawable::AbstractDrawable* drawable;
+	std::map<std::string, bool>::iterator iter;
 
-	const char* name;
-	bool enabled;
-
-	Drawable* drawable;
-	std::map<std::string, Drawable*>::iterator iterator;
-
-	for (unsigned int i = 0; i < attributes.length(); i++) 
+	for (iter = pointHelperData->enabled.begin(); iter != pointHelperData->enabled.end(); iter++)
 	{
 
-		// Attach attribute to function set
+		// Check if drawable is enabled
 		//
-		status = fnAttribute.setObject(attributes[i]);
-		
-		if (!status) {
+		drawable = this->drawables[iter->first];
+		drawable->setEnabled(iter->second);
 
-			MGlobal::displayError(status.errorString());
-			continue;
-
-		}
-
-		// Check if drawable exists
-		//
-		name = fnAttribute.name().asChar();
-		iterator = this->drawables.find(name);
-
-		if (iterator == this->drawables.end()) 
+		if (iter->second)
 		{
 
-			MGlobal::displayError("Unable to locate drawable!");
-			continue;
-
-		}
-
-		// Edit drawable properties
-		//
-		enabled = PointHelper::getBooleanValue(node, attributes[i]);
-
-		drawable = this->drawables[name];
-		drawable->setEnabled(enabled);
-
-		if (enabled) 
-		{
-
-			drawable->setObjectMatrix(objectMatrix);
+			drawable->setObjectMatrix(pointHelperData->objectMatrix);
 			drawable->prepareForDraw(objPath, cameraPath, frameContext, pointHelperData);
+
+		}
+		else
+		{
+
+			continue;
 
 		}
 
@@ -437,9 +367,9 @@ This method is called after prepareForDraw() and carries the same restrictions o
 
 	}
 
-	// Draw text is active
+	// Check if text is valid
 	//
-	if (pointHelperData->text.length() > 0) 
+	if (pointHelperData->currentText.length() > 0) 
 	{
 
 		// Begin drawable
@@ -454,7 +384,7 @@ This method is called after prepareForDraw() and carries the same restrictions o
 
 		// Draw text
 		//
-		drawManager.text(MPoint::origin, pointHelperData->text, MHWRender::MUIDrawManager::TextAlignment::kCenter);
+		drawManager.text(MPoint::origin, pointHelperData->currentText, MHWRender::MUIDrawManager::TextAlignment::kCenter);
 
 		// End drawable
 		//

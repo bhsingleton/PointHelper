@@ -1,16 +1,15 @@
-#ifndef _NOTCH
-#define _NOTCH
+#ifndef _NOTCH_DRAWABLE
+#define _NOTCH_DRAWABLE
 //
 // File: Notch.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Notch : public Drawable 
+class Notch : public Drawable::AbstractDrawable
 {
 
 public:
@@ -33,5 +32,4 @@ protected:
 	static	int				SUBDIVISIONS_AXIS;
 
 };
-
 #endif

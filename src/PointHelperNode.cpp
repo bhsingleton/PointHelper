@@ -44,14 +44,43 @@ MObject	PointHelper::objectInverseMatrix;
 MObject	PointHelper::objectWorldMatrix;
 MObject	PointHelper::objectWorldInverseMatrix;
 
-MTypeId PointHelper::id(0x0013b1c0);
+double PointHelper::DEFAULT_SIZE(10.0);
+int PointHelper::DEFAULT_FONT_SIZE(11);
+double PointHelper::DEFAULT_LINE_WIDTH(1.0);
+
+MString	PointHelper::localPositionCategory("LocalPosition");
+MString	PointHelper::localRotationCategory("LocalRotation");
+MString	PointHelper::localScaleCategory("LocalScale");
 MString	PointHelper::drawableCategory("Drawable");
+MString	PointHelper::textCategory("Text");
+MString	PointHelper::customCategory("Custom");
+MString	PointHelper::renderCategory("Render");
+
 MString	PointHelper::drawDbClassification("drawdb/geometry/PointHelper");
-MString	PointHelper::drawRegistrantId("PointHelperNodePlugin");
+MString	PointHelper::drawRegistrantId("PointHelperPlugin");
+MTypeId PointHelper::id(0x0013b1c0);
 
 
-PointHelper::PointHelper() {}
-PointHelper::~PointHelper() {}
+PointHelper::PointHelper()
+/**
+Constructor.
+*/
+{
+
+	this->data = new PointHelperData();
+
+};
+
+
+PointHelper::~PointHelper()
+/**
+Destructor.
+*/
+{
+
+	this->data = nullptr;
+
+};
 
 
 MStatus PointHelper::compute(const MPlug& plug, MDataBlock& data)
@@ -72,9 +101,7 @@ Only these values should be used when performing computations!
 
 	// Check requested attribute
 	//
-	MObject attribute = plug.attribute();
-
-	if (attribute == PointHelper::objectMatrix || attribute == PointHelper::objectInverseMatrix) 
+	if (plug == PointHelper::objectMatrix || plug == PointHelper::objectInverseMatrix)
 	{
 
 		// Get input data handles
@@ -96,16 +123,11 @@ Only these values should be used when performing computations!
 		MVector position = localPositionHandle.asVector();
 		double3 &rotation = localRotateHandle.asDouble3();
 		double3 &scale = localScaleHandle.asDouble3();
-
+		
 		// Adjust scale based on size
 		//
 		double size = sizeHandle.asDouble();
-
-		double adjustedScale[3] = {
-			scale[0] * size,
-			scale[1] * size,
-			scale[2] * size
-		};
+		double offsetScale[3] = { scale[0] * size, scale[1] * size, scale[2] * size };
 
 		// Define transform matrix
 		//
@@ -117,7 +139,7 @@ Only these values should be used when performing computations!
 		status = transform.setRotation(rotation, MTransformationMatrix::RotationOrder::kXYZ);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
-		status = transform.setScale(adjustedScale, MSpace::kTransform);
+		status = transform.setScale(offsetScale, MSpace::kTransform);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
 		// Compose object matrix
@@ -151,7 +173,7 @@ Only these values should be used when performing computations!
 		return MS::kSuccess;
 
 	}
-	else if (attribute == PointHelper::objectWorldMatrix || attribute == PointHelper::objectWorldInverseMatrix) 
+	else if (plug == PointHelper::objectWorldMatrix || plug == PointHelper::objectWorldInverseMatrix)
 	{
 
 		// Get object matrix
@@ -163,11 +185,9 @@ Only these values should be used when performing computations!
 
 		// Get all dag paths to this node
 		//
-		MObject node = this->thisMObject();
-
 		MDagPathArray dagPaths;
 
-		status = MDagPath::getAllPathsTo(node, dagPaths);
+		status = MDagPath::getAllPathsTo(this->thisMObject(), dagPaths);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
 		unsigned int numPaths = dagPaths.length();
@@ -177,51 +197,54 @@ Only these values should be used when performing computations!
 		MArrayDataHandle objectWorldMatrixArrayHandle = data.outputArrayValue(PointHelper::objectWorldMatrix, &status);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
-		MArrayDataBuilder objectWorldMatrixBuilder(&data, PointHelper::objectWorldMatrix, numPaths, &status);
+		MArrayDataBuilder objectWorldMatrixBuilder = objectWorldMatrixArrayHandle.builder(&status);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
 		MArrayDataHandle objectWorldInverseMatrixArrayHandle = data.outputArrayValue(PointHelper::objectWorldInverseMatrix, &status);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
 
-		MArrayDataBuilder objectWorldInverseMatrixBuilder(&data, PointHelper::objectWorldInverseMatrix, numPaths, &status);
+		MArrayDataBuilder objectWorldInverseMatrixBuilder = objectWorldInverseMatrixArrayHandle.builder(&status);
 		CHECK_MSTATUS_AND_RETURN_IT(status);
+
+		MDataHandle objectWorldMatrixHandle, objectWorldInverseMatrixHandle;
+		MDagPath dagPath;
+		MMatrix inclusiveMatrix, objectWorldMatrix, objectWorldInverseMatrix;
 
 		for (unsigned int i = 0; i < numPaths; i++) 
 		{
 
 			// Create new data handles for elements
 			//
-			MDataHandle hObjectWorldMatrix = objectWorldMatrixBuilder.addElement(i, &status);
-			MDataHandle hObjectWorldInverseMatrix = objectWorldInverseMatrixBuilder.addElement(i, &status);
+			objectWorldMatrixHandle = objectWorldMatrixBuilder.addElement(i, &status);
+			CHECK_MSTATUS_AND_RETURN_IT(status);
+
+			objectWorldInverseMatrixHandle = objectWorldInverseMatrixBuilder.addElement(i, &status);
+			CHECK_MSTATUS_AND_RETURN_IT(status);
 
 			// Get inclusive matrix to dag path
 			//
-			MDagPath dagPath = dagPaths[i];
-			MMatrix inclusiveMatrix = dagPath.inclusiveMatrix();
+			dagPath = dagPaths[i];
+			inclusiveMatrix = dagPath.inclusiveMatrix();
 
-			MMatrix objectWorldMatrix = objectMatrix * inclusiveMatrix;
-			MMatrix objectWorldInverseMatrix = objectWorldMatrix.inverse();
+			objectWorldMatrix = objectMatrix * inclusiveMatrix;
+			objectWorldInverseMatrix = objectWorldMatrix.inverse();
 
 			// Assign matrices to elements
 			//
-			hObjectWorldMatrix.setMMatrix(objectWorldMatrix);
-			hObjectWorldInverseMatrix.setMMatrix(objectWorldInverseMatrix);
+			objectWorldMatrixHandle.setMMatrix(objectWorldMatrix);
+			objectWorldMatrixHandle.setClean();
 
-			// Mark handles as clean
-			//
-			hObjectWorldMatrix.setClean();
-			hObjectWorldInverseMatrix.setClean();
+			objectWorldInverseMatrixHandle.setMMatrix(objectWorldInverseMatrix);
+			objectWorldInverseMatrixHandle.setClean();
 
 		}
 
 		// Assign builders to data handles
 		//
 		objectWorldMatrixArrayHandle.set(objectWorldMatrixBuilder);
-		objectWorldInverseMatrixArrayHandle.set(objectWorldInverseMatrixBuilder);
-
-		// Mark data handles as clean
-		//
 		objectWorldMatrixArrayHandle.setAllClean();
+
+		objectWorldInverseMatrixArrayHandle.set(objectWorldInverseMatrixBuilder);
 		objectWorldInverseMatrixArrayHandle.setAllClean();
 
 		// Mark data block as clean
@@ -232,14 +255,29 @@ Only these values should be used when performing computations!
 		return MS::kSuccess;
 
 	}
-	else;
+	else
+	{
+		
+		return MS::kUnknownParameter;
 
-	return MS::kUnknownParameter;
+	}
 
 };
 
 
 MStatus PointHelper::preEvaluation(const MDGContext& context, const MEvaluationNode& evaluationNode)
+/**
+Prepare a node's internal state for threaded evaluation.
+During the evaluation graph execution each node gets a chance to reset its internal states just before being evaluated.
+This code has to be thread safe, non-blocking and work only on data owned by the node.
+The timing of this callback is at the discretion of evaluation graph dependencies and individual evaluators. This means, it should be used purely to prepare this node for evaluation and no particular order should be assumed.
+This call will most likely happen from a worker thread.
+When using Evaluation Caching or VP2 Custom Caching, preEvaluation() is called as part of the evaluation process. This function is not called as part of the cache restore process because no evaluation takes place in that case.
+
+@param context: Context in which the evaluation is happening. This should be respected and only internal state information pertaining to it should be modified.
+@param evaluationNode: Evaluation node which contains information about the dirty plugs that are about to be evaluated for the context. Should be only used to query information.
+@return: Return status.
+*/
 {
 
 	MStatus status;
@@ -260,12 +298,21 @@ MStatus PointHelper::preEvaluation(const MDGContext& context, const MEvaluationN
 
 	}
 
-	return MS::kSuccess;
+	return MPxLocatorNode::preEvaluation(context, evaluationNode);
 
 };
 
 
 void PointHelper::getCacheSetup(const MEvaluationNode& evaluationNode, MNodeCacheDisablingInfo& disablingInfo, MNodeCacheSetupInfo& cacheSetupInfo, MObjectArray& monitoredAttributes) const
+/**
+Provide node-specific setup info for the Cached Playback system.
+
+@param evaluationNode: This node's evaluation node, contains animated plug information.
+@param disablingInfo: Information about why the node disables Cached Playback to be reported to the user.
+@param cacheSetupInfo: Preferences and requirements this node has for Cached Playback.
+@param monitoredAttributes: Attributes impacting the behavior of this method that will be monitored for change.
+@return: Void.
+*/
 {
 
 	// Call parent function
@@ -280,250 +327,225 @@ void PointHelper::getCacheSetup(const MEvaluationNode& evaluationNode, MNodeCach
 };
 
 
-MMatrix PointHelper::getObjectMatrix() const
+bool PointHelper::setInternalValue(const MPlug& plug, const MDataHandle& handle)
 /**
-Retrieves the object matrix using the supplied context.
+This method is overridden by nodes that store attribute data in some internal format.
+The internal state of attributes can be set or queried using the setInternal and internal methods of MFnAttribute.
+When internal attribute values are set via setAttr or MPlug::setValue this method is called.
+Another use for this method is to impose attribute limits.
 
-@param context: The context to use when retrieving the value.
-@return: Object matrix.
+@param plug: The attribute that is being set.
+@param handle: The dataHandle containing the value to set.
+@return: 
 */
 {
 
 	MStatus status;
-
-	// Fing matrix plug
-	//
-	MObject node = this->thisMObject();
-	MPlug plug(node, PointHelper::objectMatrix);
-
-	// Get matrix data
-	//
-	MObject matrixData;
-
-	status = plug.getValue(matrixData);
-	CHECK_MSTATUS(status);
-
-	// Get matrix value using function set
-	//
-	MFnMatrixData fnMatrixData(matrixData, &status);
-	CHECK_MSTATUS(status);
-
-	MMatrix matrix = fnMatrixData.matrix(&status);
-	CHECK_MSTATUS(status);
-
-	return matrix;
-
-};
-
-
-MMatrix PointHelper::getObjectWorldMatrix() const
-/**
-Retrieves the world object matrix for this instance.
-
-@return: Object world matrix.
-*/
-{
-
-	MStatus status;
-
-	// Get instance number
-	//
-	MObject node = this->thisMObject();
 	
-	MDagPath dagPath;
-
-	status = MDagPath::getAPathTo(node, dagPath);
-	CHECK_MSTATUS(status);
-
-	unsigned int instanceNumber = dagPath.instanceNumber(&status);
-	CHECK_MSTATUS(status);
-
-	// Find plug element
+	// Inspect attribute
 	//
-	MPlug plug(node, PointHelper::objectWorldMatrix);
-
-	status = plug.selectAncestorLogicalIndex(instanceNumber, PointHelper::objectWorldMatrix);
-	CHECK_MSTATUS(status);
-
-	// Get matrix data
-	//
-	MObject matrixData;
-
-	status = plug.getValue(matrixData);
-	CHECK_MSTATUS(status);
-
-	// Get matrix value using function set
-	//
-	MFnMatrixData fnMatrixData(matrixData, &status);
-	CHECK_MSTATUS(status);
-
-	MMatrix matrix = fnMatrixData.matrix(&status);
-	CHECK_MSTATUS(status);
-
-	return matrix;
-
-};
-
-
-MStatus PointHelper::getControlPoints(const MDagPath& dagPath, MPointArray& points)
-/**
-Retrieves all of the points to make the user defined custom drawable.
-
-@param objPath: Dag path to the point helper.
-@param points: Passed array to store points in.
-@return: Return status.
-*/
-{
-	MStatus status;
-
-	// Get control points plug
-	//
-	MObject node = dagPath.node();
-	MPlug controlPointsPlug(node, PointHelper::controlPoints);
-
-	unsigned int numElements = controlPointsPlug.numElements(&status);
+	MObject attribute = plug.attribute(&status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	// Resize point array based on number of elements
-	//
-	status = points.setLength(numElements);
+	MFnAttribute fnAttribute(attribute, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	// Iterate through elements
-	//
-	MPlug element;
-	MPlug xValuePlug, yValuePlug, zValuePlug;
-
-
-	for (unsigned int i = 0; i < numElements; i++) 
+	bool isLocalPosition = fnAttribute.hasCategory(PointHelper::localPositionCategory);
+	bool isLocalRotation = fnAttribute.hasCategory(PointHelper::localRotationCategory);
+	bool isLocalScale = fnAttribute.hasCategory(PointHelper::localScaleCategory);
+	bool isDrawable = fnAttribute.hasCategory(PointHelper::drawableCategory);
+	bool isText = fnAttribute.hasCategory(PointHelper::textCategory);
+	bool isCustom = fnAttribute.hasCategory(PointHelper::customCategory);
+	bool isRender = fnAttribute.hasCategory(PointHelper::renderCategory);
+	
+	if (isLocalPosition)
 	{
 
-		// Jump to next element
-		//
-		element = controlPointsPlug.elementByPhysicalIndex(i, &status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
+		if (attribute == PointHelper::localPositionX)
+		{
+
+			this->data->localPosition.x = handle.asDistance().asCentimeters();
+
+		}
+		else if (attribute == PointHelper::localPositionY)
+		{
+
+			this->data->localPosition.y = handle.asDistance().asCentimeters();
+
+		}
+		else if (attribute == PointHelper::localPositionZ)
+		{
+
+			this->data->localPosition.z = handle.asDistance().asCentimeters();
+
+		}
+		else;
+
+		this->data->dirtyObjectMatrix();
+
+	}
+	else if (isLocalRotation)
+	{
 		
-		xValuePlug = element.child(PointHelper::xValue, &status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
+		if (attribute == PointHelper::localRotateX)
+		{
+			
+			this->data->localRotate.x = handle.asAngle().asRadians();
 
-		yValuePlug = element.child(PointHelper::yValue, &status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
+		}
+		else if (attribute == PointHelper::localRotateY)
+		{
+			
+			this->data->localRotate.y = handle.asAngle().asRadians();
 
-		zValuePlug = element.child(PointHelper::zValue, &status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
+		}
+		else if (attribute == PointHelper::localRotateZ)
+		{
+			
+			this->data->localRotate.z = handle.asAngle().asRadians();
 
-		// Assign point to passed array
-		//
-		points[i] = MPoint(xValuePlug.asDouble(), yValuePlug.asDouble(), zValuePlug.asDouble());
+		}
+		else;
+
+		this->data->dirtyObjectMatrix();
 
 	}
-
-	return MS::kSuccess;
-
-};
-
-
-bool PointHelper::getBooleanValue(const MObject& node, const MObject& attribute)
-/**
-Retrieves a boolean value from the plug associated with the supplied node and attribute.
-No error checking is performed here so be careful!
-
-@param node: Node object
-@param attribute: Attribute object
-@return: Boolean
-*/
-{
-
-	return MPlug(node, attribute).asBool();
-
-};
-
-
-double PointHelper::getDoubleValue(const MObject& node, const MObject& attribute)
-/**
-Retrieves a double value from the plug associated with the supplied node and attribute.
-No error checking is performed here so be careful!
-
-@param node: Node object
-@param attribute: Attribute object
-@return: Double
-*/
-{
-
-	return MPlug(node, attribute).asDouble();
-
-};
-
-
-float PointHelper::getFloatValue(const MObject& node, const MObject& attribute)
-/**
-Retrieves a float value from the plug associated with the supplied node and attribute.
-No error checking is performed here so be careful!
-
-@param node: Node object
-@param attribute: Attribute object
-@return: Float
-*/
-{
-
-	return MPlug(node, attribute).asFloat();
-
-};
-
-
-int PointHelper::getIntegerValue(const MObject& node, const MObject& attribute)
-/**
-Retrieves an integer value from the plug associated with the supplied node and attribute.
-No error checking is performed here so be careful!
-
-@param node: Node object
-@param attribute: Attribute object
-@return: Integer
-*/
-{
-
-	return MPlug(node, attribute).asShort();
-	
-};
-
-
-MString PointHelper::getTextChoice() const
-/**
-Retrieve the text value associated with the choice index.
-If the index is out of range then an empty string will be returned.
-
-@return: MString
-*/
-{
-
-	MStatus status;
-
-	// Intialize plugs
-	//
-	MObject node = this->thisMObject();
-
-	MPlug choicePlug(node, PointHelper::choice);
-	MPlug textPlug(node, PointHelper::text);
-
-	// Get plug values
-	//
-	int choice = choicePlug.asShort();
-	MString text;
-
-	int numElements = textPlug.numElements(&status);
-	CHECK_MSTATUS(status);
-
-	if (choice < numElements) 
+	else if (isLocalScale)
 	{
 
-		MPlug element = textPlug.elementByLogicalIndex(choice, &status);
-		CHECK_MSTATUS(status);
+		if (attribute == PointHelper::localScaleX)
+		{
 
-		text = element.asString();
+			this->data->localScale.x = handle.asDistance().asCentimeters();
+
+		}
+		else if (attribute == PointHelper::localScaleY)
+		{
+
+			this->data->localScale.y = handle.asDistance().asCentimeters();
+
+		}
+		else if (attribute == PointHelper::localScaleZ)
+		{
+
+			this->data->localScale.z = handle.asDistance().asCentimeters();
+
+		}
+		else;
+
+		this->data->dirtyObjectMatrix();
 
 	}
+	else if (isDrawable)
+	{
 
-	return text;
+		std::string name = fnAttribute.name().asChar();
+		this->data->enabled[name] = handle.asBool();
+
+	}
+	else if (isText)
+	{
+
+		if (attribute == PointHelper::choice)
+		{
+
+			this->data->choice = handle.asInt();
+			this->data->dirtyCurrentText();
+
+		}
+		else if (attribute == PointHelper::text)
+		{
+
+			this->data->cacheText(plug.logicalIndex(), handle.asString());
+			this->data->dirtyCurrentText();
+
+		}
+		else if (attribute == PointHelper::fontSize)
+		{
+
+			this->data->fontSize = handle.asDouble();
+
+		}
+		else;
+
+	}
+	else if (isCustom)
+	{
+		
+		if (attribute == PointHelper::xValue)
+		{
+
+			this->data->cacheControlPoint(plug.parent().logicalIndex(), 0, handle.asDouble());
+
+		}
+		else if (attribute == PointHelper::yValue)
+		{
+
+			this->data->cacheControlPoint(plug.parent().logicalIndex(), 1, handle.asDouble());
+
+		}
+		else if (attribute == PointHelper::zValue)
+		{
+
+			this->data->cacheControlPoint(plug.parent().logicalIndex(), 2, handle.asDouble());
+
+		}
+		else;
+
+	}
+	else if (isRender)
+	{
+		
+		if (attribute == PointHelper::size)
+		{
+
+			this->data->size = handle.asDouble();
+			this->data->dirtyObjectMatrix();
+
+		}
+		else if (attribute == PointHelper::lineWidth)
+		{
+
+			this->data->lineWidth = handle.asDouble();
+
+		}
+		else if (attribute == PointHelper::fill)
+		{
+
+			this->data->fill = handle.asBool();
+
+		}
+		else if (attribute == PointHelper::shaded)
+		{
+
+			this->data->shaded = handle.asBool();
+
+		}
+		else if (attribute == PointHelper::drawOnTop)
+		{
+
+			this->data->drawOnTop = handle.asBool();
+
+		}
+		else;
+
+	}
+	else;
+
+	return MPxLocatorNode::setInternalValue(plug, handle);
+
+};
+
+
+PointHelperData* PointHelper::getUserData()
+/**
+Returns a pointer to the internal point helper data.
+
+@return: The point helper data pointer.
+*/
+{
+
+	return this->data;
 
 };
 
@@ -551,17 +573,13 @@ Supplying a bounding box will make selection calculation more efficient!
 */
 {
 
-	MStatus status;
-
 	// Create unit scaled bounding box
 	//
-	MMatrix objectMatrix = this->getObjectMatrix();
-
 	MPoint corner1(-1.0, -1.0, -1.0);
-	corner1 *= objectMatrix;
+	corner1 *= this->data->objectMatrix;
 
 	MPoint corner2(1.0, 1.0, 1.0);
-	corner2 *= objectMatrix;
+	corner2 *= this->data->objectMatrix;
 
 	return MBoundingBox(corner1, corner2);
 
@@ -580,82 +598,6 @@ See pluginMain.cpp for details.
 	return new PointHelper();
 
 };
-
-
-MStatus PointHelper::getAttributesByCategory(const MObject& node, const MString& category, MObjectArray& attributes)
-/**
-Collects all of the attributes from the given node based on the supplied category name.
-All drawable attributes are tagged to make retrieving them easier.
-
-@param node: The node to collect from.
-@param category: The category to filter for.
-@param attributes: Passed container to store the attributes.
-@return: MStatus
-*/
-{
-
-	MStatus status;
-
-	// Initialize function set
-	//
-	MFnDependencyNode fnDependNode(node, &status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-
-	// Clear passed array
-	//
-	status = attributes.clear();
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-
-	// Iterate through attributes
-	//
-	unsigned int attributeCount = fnDependNode.attributeCount(&status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-
-	MObject attribute;
-	MFnAttribute fnAttribute;
-
-	for (unsigned int i = 0; i < attributeCount; i++) 
-	{
-
-		// Assign attribute to function set
-		//
-		attribute = fnDependNode.attribute(i, &status);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		status = fnAttribute.setObject(attribute);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		// Check if attribute belongs to category
-		//
-		if (fnAttribute.hasCategory(category)) 
-		{
-
-			status = attributes.append(attribute);
-			CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		}
-
-	}
-
-	return MS::kSuccess;
-
-};
-
-
-MStatus PointHelper::getAttributesByCategory(const MString& category, MObjectArray& attributes)
-/**
-Collects all of the attributes based on the given category name from the node.
-All drawable attributes are tagged to make retrieving them easier.
-
-@param category: The category to filter for.
-@param attributes: Passed container to store the attributes.
-@return: MStatus
-*/
-{
-
-	return PointHelper::getAttributesByCategory(this->thisMObject(), category, attributes);
-
-}
 
 
 MStatus PointHelper::initialize()
@@ -678,50 +620,110 @@ Use this function to define any static attributes.
 	MFnTypedAttribute fnTypedAttr;
 
 	// Input attributes:
+	// Edit ".localPositionX" attribute
+	//
+	status = fnUnitAttr.setObject(PointHelper::localPositionX);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localPositionCategory));
+
+	// Edit ".localPositionY" attribute
+	//
+	status = fnUnitAttr.setObject(PointHelper::localPositionY);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localPositionCategory));
+
+	// Edit ".localPositionZ" attribute
+	//
+	status = fnUnitAttr.setObject(PointHelper::localPositionZ);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localPositionCategory));
+
 	// Define ".localRotateX" attribute
 	//
 	PointHelper::localRotateX = fnUnitAttr.create("localRotateX", "lorx", MFnUnitAttribute::kAngle, 0.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
 	CHECK_MSTATUS(fnUnitAttr.setChannelBox(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true)); // Enable this to force MPxDrawOverride::transform() to update!
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localRotationCategory));
 
 	// Define ".localRotateY" attribute
 	//
 	PointHelper::localRotateY = fnUnitAttr.create("localRotateY", "lory", MFnUnitAttribute::kAngle, 0.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
 	CHECK_MSTATUS(fnUnitAttr.setChannelBox(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true)); // Enable this to force MPxDrawOverride::transform() to update!
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localRotationCategory));
 
 	// Define ".localRotateZ" attribute
 	//
 	PointHelper::localRotateZ = fnUnitAttr.create("localRotateZ", "lorz", MFnUnitAttribute::kAngle, 0.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
 	CHECK_MSTATUS(fnUnitAttr.setChannelBox(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true)); // Enable this to force MPxDrawOverride::transform() to update!
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localRotationCategory));
 
 	// Define ".localRotate"
 	//
 	PointHelper::localRotate = fnNumericAttr.create("localRotate", "lor", PointHelper::localRotateX, PointHelper::localRotateY, PointHelper::localRotateZ, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	CHECK_MSTATUS(fnNumericAttr.setChannelBox(true));
-	CHECK_MSTATUS(fnNumericAttr.setAffectsWorldSpace(true)); // Enable this to force MPxDrawOverride::transform() to update!
+	// Edit ".localScaleX" attribute
+	//
+	status = fnUnitAttr.setObject(PointHelper::localScaleX);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localScaleCategory));
+
+	// Edit ".localScaleY" attribute
+	//
+	status = fnUnitAttr.setObject(PointHelper::localScaleY);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localScaleCategory));
+
+	// Edit ".localScaleZ" attribute
+	//
+	status = fnUnitAttr.setObject(PointHelper::localScaleZ);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
+	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localScaleCategory));
 
 	// Define ".size" attribute
 	//
-	PointHelper::size = fnNumericAttr.create("size", "size", MFnNumericData::kDouble, 10.0, &status);
+	PointHelper::size = fnNumericAttr.create("size", "size", MFnNumericData::kDouble, DEFAULT_SIZE, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	CHECK_MSTATUS(fnNumericAttr.setAffectsWorldSpace(true)); // Enable this to force MPxDrawOverride::transform() to update!
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::renderCategory));
 
 	// Define ".centerMarker" attribute
 	//
 	PointHelper::centerMarker = fnNumericAttr.create("centerMarker", "centerMarker", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".axisTripod" attribute
@@ -729,6 +731,7 @@ Use this function to define any static attributes.
 	PointHelper::axisTripod = fnNumericAttr.create("axisTripod", "axisTripod", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".cross" attribute
@@ -736,6 +739,7 @@ Use this function to define any static attributes.
 	PointHelper::cross = fnNumericAttr.create("cross", "cross", MFnNumericData::kBoolean, true, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".square" attribute
@@ -743,6 +747,7 @@ Use this function to define any static attributes.
 	PointHelper::square = fnNumericAttr.create("square", "square", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".box" attribute
@@ -750,6 +755,7 @@ Use this function to define any static attributes.
 	PointHelper::box = fnNumericAttr.create("box", "box", MFnNumericData::kBoolean, true, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".diamond" attribute
@@ -757,6 +763,7 @@ Use this function to define any static attributes.
 	PointHelper::diamond = fnNumericAttr.create("diamond", "diamond", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".circle" attribute
@@ -764,6 +771,7 @@ Use this function to define any static attributes.
 	PointHelper::disc = fnNumericAttr.create("disc", "disc", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".arrow" attribute
@@ -771,6 +779,7 @@ Use this function to define any static attributes.
 	PointHelper::arrow = fnNumericAttr.create("arrow", "arrow", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".notch" attribute
@@ -778,6 +787,7 @@ Use this function to define any static attributes.
 	PointHelper::notch = fnNumericAttr.create("notch", "notch", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".tearDrop" attribute
@@ -785,6 +795,7 @@ Use this function to define any static attributes.
 	PointHelper::tearDrop = fnNumericAttr.create("tearDrop", "tearDrop", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".cylinder" attribute
@@ -792,6 +803,7 @@ Use this function to define any static attributes.
 	PointHelper::cylinder = fnNumericAttr.create("cylinder", "cylinder", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".sphere" attribute
@@ -799,6 +811,7 @@ Use this function to define any static attributes.
 	PointHelper::sphere = fnNumericAttr.create("sphere", "sphere", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// Define ".choice" attribute
@@ -806,26 +819,33 @@ Use this function to define any static attributes.
 	PointHelper::choice = fnNumericAttr.create("choice", "choice", MFnNumericData::kInt, 0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::textCategory));
+
 	// Define ".text" attribute
 	//
 	PointHelper::text = fnTypedAttr.create("text", "txt", MFnData::kString, MObject::kNullObj, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnTypedAttr.setInternal(true));
 	CHECK_MSTATUS(fnTypedAttr.setArray(true));
+	CHECK_MSTATUS(fnTypedAttr.addToCategory(PointHelper::textCategory));
 
 	// Define ".fontSize" attribute
 	//
-	PointHelper::fontSize = fnNumericAttr.create("fontSize", "fontSize", MFnNumericData::kInt, 11, &status);
+	PointHelper::fontSize = fnNumericAttr.create("fontSize", "fontSize", MFnNumericData::kInt, DEFAULT_FONT_SIZE, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnNumericAttr.setMin(1));
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::textCategory));
 
 	// Define ".custom" attribute
 	//
 	PointHelper::custom = fnNumericAttr.create("custom", "custom", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	CHECK_MSTATUS(fnNumericAttr.setInternal(true)); // Without this we can't assign a callback at runtime!
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::drawableCategory));
 
 	// ".xValue" attribute
@@ -833,15 +853,24 @@ Use this function to define any static attributes.
 	PointHelper::xValue = fnNumericAttr.create("xValue", "xValue", MFnNumericData::kDouble, 0.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::customCategory));
+
 	// ".yValue" attribute
 	//
 	PointHelper::yValue = fnNumericAttr.create("yValue", "yValue", MFnNumericData::kDouble, 0.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::customCategory));
+
 	// ".zValue" attribute
 	//
 	PointHelper::zValue = fnNumericAttr.create("zValue", "zValue", MFnNumericData::kDouble, 0.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::customCategory));
 
 	// ".controlPoints" attribute
 	//
@@ -852,25 +881,36 @@ Use this function to define any static attributes.
 
 	// Define ".lineWidth" attribute
 	//
-	PointHelper::lineWidth = fnNumericAttr.create("lineWidth", "ls", MFnNumericData::kDouble, 1.0, &status);
+	PointHelper::lineWidth = fnNumericAttr.create("lineWidth", "lw", MFnNumericData::kDouble, DEFAULT_LINE_WIDTH, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnNumericAttr.setMin(0.0));
-
-	// Define ".drawOnTop" attribute
-	//
-	PointHelper::drawOnTop = fnNumericAttr.create("drawOnTop", "drawOnTop", MFnNumericData::kBoolean, false, &status);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::renderCategory));
 
 	// Define ".fill" attribute
 	//
 	PointHelper::fill = fnNumericAttr.create("fill", "fill", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::renderCategory));
+
 	// Define ".shaded" attribute
 	//
 	PointHelper::shaded = fnNumericAttr.create("shaded", "shaded", MFnNumericData::kBoolean, false, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::renderCategory));
+
+	// Define ".drawOnTop" attribute
+	//
+	PointHelper::drawOnTop = fnNumericAttr.create("drawOnTop", "drawOnTop", MFnNumericData::kBoolean, false, &status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::renderCategory));
 
 	// Output attributes:
 	// Define ".objectMatrix" attribute

@@ -10,7 +10,7 @@
 MObject	Box::MESH_DATA = MObject::kNullObj;
 
 
-Box::Box()
+Box::Box() : Drawable::AbstractDrawable()
 /**
 Constructor.
 */
@@ -36,7 +36,7 @@ Constructor.
 
 		// Create box primitive
 		//
-		Box::MESH_DATA = DrawableUtilities::createMeshData(points, polygonCounts, polygonConnects, edgeSmoothings, &status);
+		Box::MESH_DATA = Drawable::createMeshData(points, polygonCounts, polygonConnects, edgeSmoothings, &status);
 		CHECK_MSTATUS(status);
 
 	}
@@ -63,15 +63,15 @@ Prepares to draw a box.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Box::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Box::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Extrapolate data from mesh
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
-	status = DrawableUtilities::getLines(meshData, this->lines);
+	status = Drawable::getLines(meshData, this->lines);
 	CHECK_MSTATUS(status);
 
 };

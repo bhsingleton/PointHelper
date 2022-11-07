@@ -1,16 +1,15 @@
-#ifndef _BOX
-#define _BOX
+#ifndef _BOX_DRAWABLE
+#define _BOX_DRAWABLE
 //
 // File: Box.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Box : public Drawable 
+class Box : public Drawable::AbstractDrawable
 {
 
 public:
@@ -46,6 +45,6 @@ private:
 	const int POLYGON_COUNTS[6] = { 4, 4, 4, 4, 4, 4 };
 	const int POLYGON_CONNECTS[24] = { 0, 1, 3, 2, 2, 3, 5, 4, 4, 5, 7, 6, 6, 7, 1, 0, 1, 7, 5, 3, 6, 0, 2, 4 };
 	const int NUM_EDGES = 12;
-};
 
+};
 #endif

@@ -7,28 +7,8 @@
 #include "Custom.h"
 
 
-Custom::Custom() {};
+Custom::Custom() : Drawable::AbstractDrawable() {};
 Custom::~Custom() {};
-
-
-void Custom::prepareForDraw(const MDagPath& objPath, const MDagPath& cameraPath, const MHWRender::MFrameContext& frameContext, PointHelperData* pointHelperData)
-/**
-Collects all of the control points required for this drawable.
-
-@param objPath: The path to the object being drawn.
-@param cameraPath: The path to the camera that is being used to draw.
-@param frameContext: Frame level context information.
-@param pointHelperData: Data cached by the previous draw of the instance.
-@return: void
-*/
-{
-	
-	// Get custom drawable
-	//
-	MStatus status = PointHelper::getControlPoints(objPath, this->points);
-	CHECK_MSTATUS(status);
-
-};
 
 
 void Custom::draw(MHWRender::MUIDrawManager& drawManager, const MHWRender::MFrameContext& frameContext, const PointHelperData* pointHelperData)
@@ -43,7 +23,7 @@ Draws a custom shape stored inside the data pointer.
 
 	// Check if there are enough points
 	//
-	unsigned int numPoints = this->points.length();
+	unsigned int numPoints = pointHelperData->controlPoints.length();
 
 	if (numPoints < 2) 
 	{
@@ -57,7 +37,7 @@ Draws a custom shape stored inside the data pointer.
 	for (unsigned int i = 0; i < (numPoints - 1); i++) 
 	{
 
-		drawManager.line(this->points[i], this->points[i + 1]);
+		drawManager.line(pointHelperData->controlPoints[i], pointHelperData->controlPoints[i + 1]);
 
 	}
 

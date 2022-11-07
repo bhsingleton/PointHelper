@@ -1,16 +1,15 @@
-#ifndef _SPHERE
-#define _SPHERE
+#ifndef _SPHERE_DRAWABLE
+#define _SPHERE_DRAWABLE
 //
 // File: Sphere.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Sphere : public Drawable 
+class Sphere : public Drawable::AbstractDrawable
 {
 
 public:
@@ -33,5 +32,4 @@ protected:
 	static	int				SUBDIVISIONS_HEIGHT;
 
 };
-
 #endif

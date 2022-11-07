@@ -11,7 +11,7 @@ MObject		Square::MESH_DATA = MObject::kNullObj;
 MIntArray	Square::BOUNDARY = MIntArray();
 
 
-Square::Square()
+Square::Square() : Drawable::AbstractDrawable()
 /**
 Constructor.
 */
@@ -36,12 +36,12 @@ Constructor.
 
 		// Create new mesh data object
 		//
-		Square::MESH_DATA = DrawableUtilities::createMeshData(points, polygonCounts, polygonConnects, &status);
+		Square::MESH_DATA = Drawable::createMeshData(points, polygonCounts, polygonConnects, &status);
 		CHECK_MSTATUS(status);
 
 		// Get edge boundary
 		//
-		status = DrawableUtilities::getBoundary(Square::MESH_DATA, Square::BOUNDARY);
+		status = Drawable::getBoundary(Square::MESH_DATA, Square::BOUNDARY);
 		CHECK_MSTATUS(status);
 
 	}
@@ -68,17 +68,17 @@ Prepares to draw a square.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Square::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Square::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Extrapolate data from mesh
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
 	// Get lines from boundary
 	//
-	status = DrawableUtilities::getLines(meshData, Square::BOUNDARY, this->lines);
+	status = Drawable::getLines(meshData, Square::BOUNDARY, this->lines);
 	CHECK_MSTATUS(status);
 
 };

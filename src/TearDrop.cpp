@@ -13,7 +13,7 @@ double		TearDrop::TEARDROP_RADIUS = 0.5;
 int			TearDrop::SUBDIVISIONS_AXIS = 40;
 
 
-TearDrop::TearDrop()
+TearDrop::TearDrop() : Drawable::AbstractDrawable()
 /**
 Constructor.
 */
@@ -31,7 +31,7 @@ Constructor.
 		MFnMeshData fnMeshData;
 		TearDrop::MESH_DATA = fnMeshData.create();
 
-		DrawableUtilities::sector(MVector::zero, MVector::xAxis, TearDrop::TEARDROP_RADIUS, 45, 315, TearDrop::SUBDIVISIONS_AXIS, TearDrop::MESH_DATA);
+		Drawable::sector(MVector::zero, MVector::xAxis, TearDrop::TEARDROP_RADIUS, 45, 315, TearDrop::SUBDIVISIONS_AXIS, TearDrop::MESH_DATA);
 
 		// Add tear drop
 		//
@@ -51,17 +51,17 @@ Constructor.
 		polygon[2] = points[length - 1];
 		polygon[3] = MPoint(0.0, 0.0, 0.7, 1.0);
 
-		fnMesh.addPolygon(polygon, true, MERGE_THRESHOLD, TearDrop::MESH_DATA, &status);
+		fnMesh.addPolygon(polygon, true, Drawable::MERGE_THRESHOLD, TearDrop::MESH_DATA, &status);
 		CHECK_MSTATUS(status);
 
 		// Get edge boundary
 		//
 		MIntArray boundary;
 
-		status = DrawableUtilities::getBoundary(TearDrop::MESH_DATA, TearDrop::BOUNDARY);
+		status = Drawable::getBoundary(TearDrop::MESH_DATA, TearDrop::BOUNDARY);
 		CHECK_MSTATUS(status);
 
-		MObject component = DrawableUtilities::createComponent(MFn::kMeshEdgeComponent, boundary, &status);
+		MObject component = Drawable::createComponent(MFn::kMeshEdgeComponent, boundary, &status);
 		CHECK_MSTATUS(status);
 
 	}
@@ -88,17 +88,17 @@ Prepares to draw a tear drop.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(TearDrop::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(TearDrop::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Extrapolate data from mesh
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
 	// Get lines from boundary
 	//
-	status = DrawableUtilities::getLines(meshData, TearDrop::BOUNDARY, this->lines);
+	status = Drawable::getLines(meshData, TearDrop::BOUNDARY, this->lines);
 	CHECK_MSTATUS(status);
 
 };

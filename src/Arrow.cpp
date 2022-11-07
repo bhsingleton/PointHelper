@@ -11,7 +11,7 @@ MObject		Arrow::MESH_DATA = MObject::kNullObj;
 MIntArray	Arrow::BOUNDARY = MIntArray();
 
 
-Arrow::Arrow()
+Arrow::Arrow() : Drawable::AbstractDrawable()
 /**
 Constructor.
 */
@@ -36,12 +36,12 @@ Constructor.
 
 		// Create new mesh data object
 		//
-		Arrow::MESH_DATA = DrawableUtilities::createMeshData(points, polygonCounts, polygonConnects, &status);
+		Arrow::MESH_DATA = Drawable::createMeshData(points, polygonCounts, polygonConnects, &status);
 		CHECK_MSTATUS(status);
 
 		// Get edge boundary
 		//
-		status = DrawableUtilities::getBoundary(Arrow::MESH_DATA, Arrow::BOUNDARY);
+		status = Drawable::getBoundary(Arrow::MESH_DATA, Arrow::BOUNDARY);
 		CHECK_MSTATUS(status);
 
 	}
@@ -69,17 +69,17 @@ Prepares to draw an arrow.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Arrow::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Arrow::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Extrapolate data from mesh
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
 	// Get lines from boundary
 	//
-	status = DrawableUtilities::getLines(meshData, Arrow::BOUNDARY, this->lines);
+	status = Drawable::getLines(meshData, Arrow::BOUNDARY, this->lines);
 	CHECK_MSTATUS(status);
 
 };

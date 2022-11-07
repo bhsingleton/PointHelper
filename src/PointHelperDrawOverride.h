@@ -8,19 +8,20 @@
 
 #include "PointHelperNode.h"
 #include "PointHelperData.h"
-#include "Drawable.h"
+#include "AbstractDrawable.h"
 
 #include <maya/MPxDrawOverride.h>
+#include <maya/MObject.h>
+#include <maya/MDagPath.h>
+#include <maya/MEventMessage.h>
+#include <maya/MCallbackIdArray.h>
+#include <maya/MFnDependencyNode.h>
 
 #include <maya/MViewport2Renderer.h>
 #include <maya/MUIDrawManager.h>
 #include <maya/MFrameContext.h>
 #include <maya/MHWGeometry.h>
 #include <maya/MHWGeometryUtilities.h>
-
-#include <maya/MObject.h>
-#include <maya/MDagPath.h>
-#include <maya/MCallbackIdArray.h>
 
 #include <map>
 #include <string>
@@ -51,12 +52,11 @@ public:
 
 private:
 
-			PointHelper*						pointHelper;
-			std::map<std::string, Drawable*>	drawables;
+			PointHelper*										pointHelper;
+			std::map<std::string, Drawable::AbstractDrawable*>	drawables;
 
 			MCallbackId							modelEditorChangedCallbackId;
 	static	void								onModelEditorChanged(void *clientData);
 
 };
-
 #endif

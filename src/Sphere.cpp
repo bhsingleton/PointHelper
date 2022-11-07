@@ -13,7 +13,7 @@ int		Sphere::SUBDIVISIONS_AXIS = 40;
 int		Sphere::SUBDIVISIONS_HEIGHT = 40;
 
 
-Sphere::Sphere()
+Sphere::Sphere() : Drawable::AbstractDrawable()
 /**
 Constructor.
 */
@@ -29,7 +29,7 @@ Constructor.
 		MFnMeshData fnMeshData;
 		Sphere::MESH_DATA = fnMeshData.create();
 
-		DrawableUtilities::sphere(MVector::zero, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS, Sphere::SUBDIVISIONS_HEIGHT, Sphere::MESH_DATA);
+		Drawable::sphere(MVector::zero, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS, Sphere::SUBDIVISIONS_HEIGHT, Sphere::MESH_DATA);
 
 	}
 
@@ -55,23 +55,23 @@ Prepares to draw a cylinder.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Sphere::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Sphere::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Get mesh triangles
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
 	// Build circle array for wireframe
 	//
 	std::vector<MPointArray> points(3);
-	points[0] = DrawableUtilities::circle(MVector::zero, MVector::xAxis, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS + 1);
-	points[1] = DrawableUtilities::circle(MVector::zero, MVector::yAxis, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS + 1);
-	points[2] = DrawableUtilities::circle(MVector::zero, MVector::zAxis, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS + 1);
+	points[0] = Drawable::circle(MVector::zero, MVector::xAxis, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS + 1);
+	points[1] = Drawable::circle(MVector::zero, MVector::yAxis, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS + 1);
+	points[2] = Drawable::circle(MVector::zero, MVector::zAxis, Sphere::SPHERE_RADIUS, Sphere::SUBDIVISIONS_AXIS + 1);
 
-	this->lines = DrawableUtilities::stagger(points);
-	DrawableUtilities::transform(pointHelperData->objectMatrix, this->lines);
+	this->lines = Drawable::stagger(points);
+	Drawable::transform(pointHelperData->objectMatrix, this->lines);
 
 };
 

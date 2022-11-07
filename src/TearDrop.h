@@ -1,16 +1,15 @@
-#ifndef _TEAR_DROP
-#define _TEAR_DROP
+#ifndef _TEAR_DROP_DRAWABLE
+#define _TEAR_DROP_DRAWABLE
 //
 // File: TearDrop.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class TearDrop : public Drawable 
+class TearDrop : public Drawable::AbstractDrawable
 {
 
 public:
@@ -33,5 +32,4 @@ protected:
 	static	int				SUBDIVISIONS_AXIS;
 
 };
-
 #endif

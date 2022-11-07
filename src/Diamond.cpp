@@ -10,7 +10,7 @@
 MObject	Diamond::MESH_DATA = MObject::kNullObj;
 
 
-Diamond::Diamond()
+Diamond::Diamond() : Drawable::AbstractDrawable()
 /**
 Constructor.
 */
@@ -36,7 +36,7 @@ Constructor.
 
 		// Create diamond primitive
 		//
-		Diamond::MESH_DATA = DrawableUtilities::createMeshData(points, polygonCounts, polygonConnects, edgeSmoothings, &status);
+		Diamond::MESH_DATA = Drawable::createMeshData(points, polygonCounts, polygonConnects, edgeSmoothings, &status);
 		CHECK_MSTATUS(status);
 
 	}
@@ -63,15 +63,15 @@ Prepares to draw a diamond.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Diamond::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Diamond::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Extrapolate data from mesh
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
-	status = DrawableUtilities::getLines(meshData, this->lines);
+	status = Drawable::getLines(meshData, this->lines);
 	CHECK_MSTATUS(status);
 
 };

@@ -7,7 +7,7 @@
 #include "Cross.h"
 
 
-Cross::Cross() {};
+Cross::Cross() : Drawable::AbstractDrawable() {};
 Cross::~Cross() {};
 
 
@@ -30,7 +30,7 @@ Prepares to draw a cross.
 	int numPoints = sizeof(Cross::LINES) / sizeof(Cross::LINES[0]);
 	this->lines = MPointArray(Cross::LINES, numPoints);
 
-	DrawableUtilities::transform(pointHelperData->objectMatrix, this->lines);
+	Drawable::transform(pointHelperData->objectMatrix, this->lines);
 
 };
 

@@ -1,16 +1,15 @@
-#ifndef _DISC
-#define _DISC
+#ifndef _DISC_DRAWABLE
+#define _DISC_DRAWABLE
 //
 // File: Disc.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Disc : public Drawable 
+class Disc : public Drawable::AbstractDrawable
 {
 
 public:
@@ -33,5 +32,4 @@ protected:
 	static	int				SUBDIVISIONS_AXIS;
 
 };
-
 #endif

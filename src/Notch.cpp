@@ -13,7 +13,10 @@ double		Notch::NOTCH_RADIUS = 0.5;
 int			Notch::SUBDIVISIONS_AXIS = 40;
 
 
-Notch::Notch() 
+Notch::Notch() : Drawable::AbstractDrawable()
+/**
+Constructor.
+*/
 {
 
 	MStatus status;
@@ -28,7 +31,7 @@ Notch::Notch()
 		MFnMeshData fnMeshData;
 		Notch::MESH_DATA = fnMeshData.create();
 
-		DrawableUtilities::sector(MVector::zero, MVector::xAxis, Notch::NOTCH_RADIUS, 10, 350, Notch::SUBDIVISIONS_AXIS, Notch::MESH_DATA);
+		Drawable::sector(MVector::zero, MVector::xAxis, Notch::NOTCH_RADIUS, 10, 350, Notch::SUBDIVISIONS_AXIS, Notch::MESH_DATA);
 
 		// Add notch
 		//
@@ -48,12 +51,12 @@ Notch::Notch()
 		polygon[2] = points[length - 1];
 		polygon[3] = MPoint(0.0, 0.0, 0.7, 1.0);
 
-		fnMesh.addPolygon(polygon, true, MERGE_THRESHOLD, Notch::MESH_DATA, &status);
+		fnMesh.addPolygon(polygon, true, Drawable::MERGE_THRESHOLD, Notch::MESH_DATA, &status);
 		CHECK_MSTATUS(status);
 
 		// Get edge boundary
 		//
-		status = DrawableUtilities::getBoundary(Notch::MESH_DATA, Notch::BOUNDARY);
+		status = Drawable::getBoundary(Notch::MESH_DATA, Notch::BOUNDARY);
 		CHECK_MSTATUS(status);
 
 	}
@@ -81,17 +84,17 @@ Prepares to draw a notched disc.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Notch::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Notch::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Extrapolate data from mesh
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
 	// Get lines from edges
 	//
-	status = DrawableUtilities::getLines(meshData, Notch::BOUNDARY, this->lines);
+	status = Drawable::getLines(meshData, Notch::BOUNDARY, this->lines);
 	CHECK_MSTATUS(status);
 
 };

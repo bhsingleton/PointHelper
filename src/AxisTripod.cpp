@@ -7,7 +7,7 @@
 #include "AxisTripod.h"
 
 
-AxisTripod::AxisTripod() {};
+AxisTripod::AxisTripod() : Drawable::AbstractDrawable() {};
 AxisTripod::~AxisTripod() {};
 
 
@@ -30,7 +30,7 @@ Prepares to draw a cross.
 	int numPoints = sizeof(AxisTripod::LINES) / sizeof(AxisTripod::LINES[0]);
 	this->lines = MPointArray(AxisTripod::LINES, numPoints);
 
-	DrawableUtilities::transform(pointHelperData->objectMatrix, this->lines);
+	Drawable::transform(pointHelperData->objectMatrix, this->lines);
 
 };
 

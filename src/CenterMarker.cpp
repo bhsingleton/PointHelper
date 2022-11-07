@@ -7,14 +7,20 @@
 #include "CenterMarker.h"
 
 
-void CenterMarker::draw(MHWRender::MUIDrawManager& drawManager, const MHWRender::MFrameContext& frameContext, const PointHelperData* pointHelperData) {
-	/**
-	Draws a center marker at the origin of this shape.
+CenterMarker::CenterMarker() : Drawable::AbstractDrawable() {};
+CenterMarker::~CenterMarker() {}
 
-	@param drawManager: Interface used for drawing basic shapes inside the viewport.
-	@param frameContext: Contains global information for the current render frame.
-	@return: void
-	*/
+
+void CenterMarker::draw(MHWRender::MUIDrawManager& drawManager, const MHWRender::MFrameContext& frameContext, const PointHelperData* pointHelperData)
+/**
+Draws a center marker at the origin of this shape.
+
+@param drawManager: Interface used for drawing basic shapes inside the viewport.
+@param frameContext: Contains global information for the current render frame.
+@return: void
+*/
+{
+
 
 	// Draw icon
 	//

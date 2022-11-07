@@ -1,16 +1,15 @@
-#ifndef _CROSS
-#define _CROSS
+#ifndef _CROSS_DRAWABLE
+#define _CROSS_DRAWABLE
 //
 // File: Cross.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Cross : public Drawable 
+class Cross : public Drawable::AbstractDrawable
 {
 
 public:
@@ -37,5 +36,4 @@ private:
 	};
 
 };
-
 #endif

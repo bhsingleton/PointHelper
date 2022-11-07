@@ -1,16 +1,15 @@
-#ifndef _CYLINDER
-#define _CYLINDER
+#ifndef _CYLINDER_DRAWABLE
+#define _CYLINDER_DRAWABLE
 //
 // File: Cylinder.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Cylinder : public Drawable 
+class Cylinder : public Drawable::AbstractDrawable
 {
 
 public:
@@ -34,5 +33,4 @@ protected:
 	static	int				SUBDIVISIONS_AXIS;
 
 };
-
 #endif

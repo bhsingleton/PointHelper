@@ -1,16 +1,15 @@
-#ifndef _SQUARE
-#define _SQUARE
+#ifndef _SQUARE_DRAWABLE
+#define _SQUARE_DRAWABLE
 //
 // File: Square.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Square : public Drawable
+class Square : public Drawable::AbstractDrawable
 {
 
 public:
@@ -45,5 +44,4 @@ private:
 	const int EDGE_SMOOTHINGS[4] = { 0, 0, 0, 0 };
 
 };
-
 #endif

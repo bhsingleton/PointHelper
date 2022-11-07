@@ -1,16 +1,15 @@
-#ifndef _ARROW
-#define _ARROW
+#ifndef _ARROW_DRAWABLE
+#define _ARROW_DRAWABLE
 //
 // File: Arrow.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Arrow : public Drawable 
+class Arrow : public Drawable::AbstractDrawable
 {
 
 public:
@@ -75,5 +74,4 @@ private:
 	const int POLYGON_COUNTS[33] = { 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4 };
 
 };
-
 #endif

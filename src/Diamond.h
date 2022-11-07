@@ -1,16 +1,15 @@
-#ifndef _DIAMOND
-#define _DIAMOND
+#ifndef _DIAMOND_DRAWABLE
+#define _DIAMOND_DRAWABLE
 //
 // File: Diamond.h
 //
 // Author: Ben Singleton
 //
 
-#include "Drawable.h"
-#include "DrawableUtilities.h"
+#include "AbstractDrawable.h"
 
 
-class Diamond : public Drawable 
+class Diamond : public Drawable ::AbstractDrawable
 {
 
 public:
@@ -46,5 +45,4 @@ private:
 	const int NUM_EDGES = 12;
 
 };
-
 #endif

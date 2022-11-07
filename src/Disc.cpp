@@ -13,7 +13,10 @@ double		Disc::DISC_RADIUS = 0.5;
 int			Disc::SUBDIVISIONS_AXIS = 32;
 
 
-Disc::Disc() : Drawable() 
+Disc::Disc() : Drawable::AbstractDrawable()
+/**
+Constructor.
+*/
 {
 
 	MStatus status;
@@ -28,11 +31,11 @@ Disc::Disc() : Drawable()
 		MFnMeshData fnMeshData;
 		Disc::MESH_DATA = fnMeshData.create();
 
-		DrawableUtilities::disc(MVector::zero, MVector::xAxis, Disc::DISC_RADIUS, Disc::SUBDIVISIONS_AXIS, Disc::MESH_DATA);
+		Drawable::disc(MVector::zero, MVector::xAxis, Disc::DISC_RADIUS, Disc::SUBDIVISIONS_AXIS, Disc::MESH_DATA);
 
 		// Get edge boundary
 		//
-		status = DrawableUtilities::getBoundary(Disc::MESH_DATA, Disc::BOUNDARY);
+		status = Drawable::getBoundary(Disc::MESH_DATA, Disc::BOUNDARY);
 		CHECK_MSTATUS(status);
 
 	}
@@ -59,17 +62,17 @@ Prepares to draw a disc.
 
 	// Copy mesh data
 	//
-	MObject meshData = DrawableUtilities::copyMeshData(Disc::MESH_DATA, pointHelperData->objectMatrix, &status);
+	MObject meshData = Drawable::copyMeshData(Disc::MESH_DATA, pointHelperData->objectMatrix, &status);
 	CHECK_MSTATUS(status);
 
 	// Get mesh triangles
 	//
-	status = DrawableUtilities::getTriangles(meshData, this->triangles, this->normals);
+	status = Drawable::getTriangles(meshData, this->triangles, this->normals);
 	CHECK_MSTATUS(status);
 
 	// Get lines from boundary
 	//
-	status = DrawableUtilities::getLines(meshData, Disc::BOUNDARY, this->lines);
+	status = Drawable::getLines(meshData, Disc::BOUNDARY, this->lines);
 	CHECK_MSTATUS(status);
 
 };
