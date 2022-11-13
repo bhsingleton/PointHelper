@@ -286,10 +286,9 @@ When using Evaluation Caching or VP2 Custom Caching, preEvaluation() is called a
 	{
 
 		if (evaluationNode.dirtyPlugExists(PointHelper::size, &status) && status || 
+			evaluationNode.dirtyPlugExists(PointHelper::localPosition, &status) && status ||
 			evaluationNode.dirtyPlugExists(PointHelper::localRotate, &status) && status ||
-			evaluationNode.dirtyPlugExists(PointHelper::localRotateX, &status) && status || 
-			evaluationNode.dirtyPlugExists(PointHelper::localRotateY, &status) && status || 
-			evaluationNode.dirtyPlugExists(PointHelper::localRotateZ, &status) && status)
+			evaluationNode.dirtyPlugExists(PointHelper::localScale, &status) && status)
 		{
 
 			MHWRender::MRenderer::setGeometryDrawDirty(this->thisMObject(), true);
