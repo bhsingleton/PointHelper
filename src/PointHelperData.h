@@ -37,40 +37,47 @@ class PointHelperData : public MUserData
 
 public:
 
-							PointHelperData();
-	virtual					~PointHelperData();
+								PointHelperData();
+	virtual						~PointHelperData();
 
-	virtual	MStatus			cacheText(const unsigned int index, const MString& text);
-	virtual	MStatus			cacheControlPoint(const unsigned int index, const int child, const double value);
-	virtual	MStatus			cacheWireColor(const MDagPath& objPath);
-	virtual	MStatus			cacheDepthPriority(const MDagPath& dagPath);
+	virtual	PointHelperData&	operator=(const PointHelperData* src);
 
-	virtual	void			dirtyCurrentText();
-	virtual	void			dirtyObjectMatrix();
+	virtual	MStatus				resizeTexts(const unsigned int size);
+	virtual	MStatus				allocateText(const unsigned int index, const MString& text);
+
+	virtual	MStatus				resizeControlPoints(const unsigned int size);
+	virtual	MStatus				allocateControlPoint(const unsigned int index, const MVector& point);
+	virtual	MStatus				allocateControlPoint(const unsigned int index, const int child, const double value);
+
+	virtual	MStatus				copyWireColor(const MDagPath& objPath);
+	virtual	MStatus				copyDepthPriority(const MDagPath& dagPath);
+
+	virtual	void				dirtyCurrentText();
+	virtual	void				dirtyObjectMatrix();
 
 public:
 			
-			std::map<std::string, bool>		enabled;
+			std::map<std::string, bool>	enabled;
 
-			MVector			localPosition;
-			MEulerRotation	localRotate;
-			MVector			localScale;
-			double			size;
-			MMatrix			objectMatrix;
+			MVector				localPosition;
+			MVector				localRotate;
+			MVector				localScale;
+			double				size;
+			MMatrix				objectMatrix;
 
-			int				choice;
-			MString			currentText;
-			MStringArray	texts;
-			int				fontSize;
+			unsigned int		choice;
+			MString				currentText;
+			MStringArray		texts;
+			int					fontSize;
 
-			float			lineWidth;
-			MColor			wireColor;
-			MPointArray		controlPoints;
+			float				lineWidth;
+			MColor				wireColor;
+			MPointArray			controlPoints;
 
-			bool			fill;
-			bool			shaded;
-			bool			drawOnTop;
-			unsigned int	depthPriority;
+			bool				fill;
+			bool				shaded;
+			bool				drawOnTop;
+			unsigned int		depthPriority;
 
 };
 #endif

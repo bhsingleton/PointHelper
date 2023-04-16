@@ -240,19 +240,18 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 	//
 	PointHelperData* pointHelperData = dynamic_cast<PointHelperData*>(userData);
 
-	if (!pointHelperData) 
+	if (pointHelperData == nullptr)
 	{
 
-		pointHelperData = this->pointHelper->getUserData();
-
+		pointHelperData = new PointHelperData();
+		
 	}
 
 	// Cache internal values
 	//
-	pointHelperData->dirtyCurrentText();
-	pointHelperData->dirtyObjectMatrix();
-	pointHelperData->cacheWireColor(objPath);
-	pointHelperData->cacheDepthPriority(objPath);
+	*pointHelperData = this->pointHelper->getUserData();
+	pointHelperData->copyWireColor(objPath);
+	pointHelperData->copyDepthPriority(objPath);
 
 	// Iterate through drawable attributes
 	//

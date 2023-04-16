@@ -8,6 +8,7 @@
 // Author: Ben Singleton
 //
 
+#include "Drawable.h"
 #include "PointHelperData.h"
 
 #include <maya/MPxLocatorNode.h>
@@ -133,12 +134,6 @@ public:
 	static	MString				drawDbClassification;
 	static	MString				drawRegistrantId;
 	static	MTypeId				id;
-
-public:
-
-	static	double				DEFAULT_SIZE;
-	static	int					DEFAULT_FONT_SIZE;
-	static	double				DEFAULT_LINE_WIDTH;
 
 protected:
 

@@ -44,10 +44,6 @@ MObject	PointHelper::objectInverseMatrix;
 MObject	PointHelper::objectWorldMatrix;
 MObject	PointHelper::objectWorldInverseMatrix;
 
-double PointHelper::DEFAULT_SIZE(10.0);
-int PointHelper::DEFAULT_FONT_SIZE(11);
-double PointHelper::DEFAULT_LINE_WIDTH(1.0);
-
 MString	PointHelper::localPositionCategory("LocalPosition");
 MString	PointHelper::localRotationCategory("LocalRotation");
 MString	PointHelper::localScaleCategory("LocalScale");
@@ -78,7 +74,7 @@ Destructor.
 */
 {
 
-	this->data = nullptr;
+	delete this->data;
 
 };
 
@@ -121,31 +117,17 @@ Only these values should be used when performing computations!
 		// Get values from handles
 		//
 		MVector position = localPositionHandle.asVector();
-		double3 &rotation = localRotateHandle.asDouble3();
-		double3 &scale = localScaleHandle.asDouble3();
-		
-		// Adjust scale based on size
-		//
+		MVector rotation = localRotateHandle.asVector();
+		MVector scale = localScaleHandle.asVector();
 		double size = sizeHandle.asDouble();
-		double offsetScale[3] = { scale[0] * size, scale[1] * size, scale[2] * size };
 
-		// Define transform matrix
-		//
-		MTransformationMatrix transform = MTransformationMatrix();
+		MMatrix positionMatrix = Drawable::createPositionMatrix(position);
+		MMatrix rotateMatrix = Drawable::createRotationMatrix(rotation);
+		MMatrix scaleMatrix = Drawable::createScaleMatrix(scale);
+		MMatrix sizeMatrix = Drawable::createScaleMatrix(size);
 
-		status = transform.setTranslation(position, MSpace::kTransform);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		status = transform.setRotation(rotation, MTransformationMatrix::RotationOrder::kXYZ);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		status = transform.setScale(offsetScale, MSpace::kTransform);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-		// Compose object matrix
-		//
-		MMatrix objectMatrix = transform.asMatrix();
-		MMatrix objectInverseMatrix = transform.asMatrixInverse();
+		MMatrix objectMatrix = sizeMatrix * scaleMatrix * rotateMatrix * positionMatrix;
+		MMatrix objectInverseMatrix = objectMatrix.inverse();
 
 		// Get output data handles
 		//
@@ -328,20 +310,20 @@ Provide node-specific setup info for the Cached Playback system.
 
 bool PointHelper::setInternalValue(const MPlug& plug, const MDataHandle& handle)
 /**
-This method is overridden by nodes that store attribute data in some internal format.
+This method is overridden by nodes that store attribute specs in some internal format.
 The internal state of attributes can be set or queried using the setInternal and internal methods of MFnAttribute.
 When internal attribute values are set via setAttr or MPlug::setValue this method is called.
 Another use for this method is to impose attribute limits.
 
 @param plug: The attribute that is being set.
-@param handle: The dataHandle containing the value to set.
+@param handle: The specsHandle containing the value to set.
 @return: 
 */
 {
 
 	MStatus status;
-	
-	// Inspect attribute
+
+	// Evaluate attribute category
 	//
 	MObject attribute = plug.attribute(&status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -360,7 +342,13 @@ Another use for this method is to impose attribute limits.
 	if (isLocalPosition)
 	{
 
-		if (attribute == PointHelper::localPositionX)
+		if (attribute == PointHelper::localPosition)
+		{
+
+			this->data->localPosition = handle.asVector();
+
+		}
+		else if (attribute == PointHelper::localPositionX)
 		{
 
 			this->data->localPosition.x = handle.asDistance().asCentimeters();
@@ -386,7 +374,13 @@ Another use for this method is to impose attribute limits.
 	else if (isLocalRotation)
 	{
 		
-		if (attribute == PointHelper::localRotateX)
+		if (attribute == PointHelper::localRotate)
+		{
+
+			this->data->localRotate = handle.asVector();
+
+		}
+		else if (attribute == PointHelper::localRotateX)
 		{
 			
 			this->data->localRotate.x = handle.asAngle().asRadians();
@@ -412,7 +406,13 @@ Another use for this method is to impose attribute limits.
 	else if (isLocalScale)
 	{
 
-		if (attribute == PointHelper::localScaleX)
+		if (attribute == PointHelper::localScale)
+		{
+
+			this->data->localScale = handle.asVector();
+
+		}
+		else if (attribute == PointHelper::localScaleX)
 		{
 
 			this->data->localScale.x = handle.asDistance().asCentimeters();
@@ -455,7 +455,7 @@ Another use for this method is to impose attribute limits.
 		else if (attribute == PointHelper::text)
 		{
 
-			this->data->cacheText(plug.logicalIndex(), handle.asString());
+			this->data->allocateText(plug.logicalIndex(), handle.asString());
 			this->data->dirtyCurrentText();
 
 		}
@@ -467,26 +467,34 @@ Another use for this method is to impose attribute limits.
 		}
 		else;
 
+		
+
 	}
 	else if (isCustom)
 	{
 		
-		if (attribute == PointHelper::xValue)
+		if (attribute == PointHelper::controlPoints)
 		{
 
-			this->data->cacheControlPoint(plug.parent().logicalIndex(), 0, handle.asDouble());
+			this->data->allocateControlPoint(plug.parent().logicalIndex(), handle.asVector());
+
+		}
+		else if (attribute == PointHelper::xValue)
+		{
+
+			this->data->allocateControlPoint(plug.parent().logicalIndex(), 0, handle.asDouble());
 
 		}
 		else if (attribute == PointHelper::yValue)
 		{
 
-			this->data->cacheControlPoint(plug.parent().logicalIndex(), 1, handle.asDouble());
+			this->data->allocateControlPoint(plug.parent().logicalIndex(), 1, handle.asDouble());
 
 		}
 		else if (attribute == PointHelper::zValue)
 		{
 
-			this->data->cacheControlPoint(plug.parent().logicalIndex(), 2, handle.asDouble());
+			this->data->allocateControlPoint(plug.parent().logicalIndex(), 2, handle.asDouble());
 
 		}
 		else;
@@ -571,16 +579,11 @@ Supplying a bounding box will make selection calculation more efficient!
 @return: MBoundingBox
 */
 {
+	
+	MBoundingBox boundingBox = MBoundingBox(MPoint(-1.0, -1.0, -1.0), MPoint(1.0, 1.0, 1.0));
+	boundingBox.transformUsing(this->data->objectMatrix);
 
-	// Create unit scaled bounding box
-	//
-	MPoint corner1(-1.0, -1.0, -1.0);
-	corner1 *= this->data->objectMatrix;
-
-	MPoint corner2(1.0, 1.0, 1.0);
-	corner2 *= this->data->objectMatrix;
-
-	return MBoundingBox(corner1, corner2);
+	return boundingBox;
 
 };
 
@@ -625,7 +628,6 @@ Use this function to define any static attributes.
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localPositionCategory));
 
 	// Edit ".localPositionY" attribute
@@ -634,7 +636,6 @@ Use this function to define any static attributes.
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localPositionCategory));
 
 	// Edit ".localPositionZ" attribute
@@ -643,8 +644,15 @@ Use this function to define any static attributes.
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localPositionCategory));
+
+	// Edit ".localPosition" attribute
+	//
+	status = fnNumericAttr.setObject(PointHelper::localPosition);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::localPositionCategory));
 
 	// Define ".localRotateX" attribute
 	//
@@ -653,7 +661,6 @@ Use this function to define any static attributes.
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
 	CHECK_MSTATUS(fnUnitAttr.setChannelBox(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localRotationCategory));
 
 	// Define ".localRotateY" attribute
@@ -663,7 +670,6 @@ Use this function to define any static attributes.
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
 	CHECK_MSTATUS(fnUnitAttr.setChannelBox(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localRotationCategory));
 
 	// Define ".localRotateZ" attribute
@@ -673,7 +679,6 @@ Use this function to define any static attributes.
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
 	CHECK_MSTATUS(fnUnitAttr.setChannelBox(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localRotationCategory));
 
 	// Define ".localRotate"
@@ -681,13 +686,15 @@ Use this function to define any static attributes.
 	PointHelper::localRotate = fnNumericAttr.create("localRotate", "lor", PointHelper::localRotateX, PointHelper::localRotateY, PointHelper::localRotateZ, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::localRotationCategory));
+
 	// Edit ".localScaleX" attribute
 	//
 	status = fnUnitAttr.setObject(PointHelper::localScaleX);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localScaleCategory));
 
 	// Edit ".localScaleY" attribute
@@ -696,7 +703,6 @@ Use this function to define any static attributes.
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localScaleCategory));
 
 	// Edit ".localScaleZ" attribute
@@ -705,16 +711,22 @@ Use this function to define any static attributes.
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnUnitAttr.setInternal(true));
-	CHECK_MSTATUS(fnUnitAttr.setAffectsWorldSpace(true));
 	CHECK_MSTATUS(fnUnitAttr.addToCategory(PointHelper::localScaleCategory));
 
-	// Define ".size" attribute
+	// Edit ".localScale" attribute
 	//
-	PointHelper::size = fnNumericAttr.create("size", "size", MFnNumericData::kDouble, DEFAULT_SIZE, &status);
+	status = fnNumericAttr.setObject(PointHelper::localScale);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
-	CHECK_MSTATUS(fnNumericAttr.setAffectsWorldSpace(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::localScaleCategory));
+
+	// Define ".size" attribute
+	//
+	PointHelper::size = fnNumericAttr.create("size", "size", MFnNumericData::kDouble, 10.0, &status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::renderCategory));
 
 	// Define ".centerMarker" attribute
@@ -832,7 +844,7 @@ Use this function to define any static attributes.
 
 	// Define ".fontSize" attribute
 	//
-	PointHelper::fontSize = fnNumericAttr.create("fontSize", "fontSize", MFnNumericData::kInt, DEFAULT_FONT_SIZE, &status);
+	PointHelper::fontSize = fnNumericAttr.create("fontSize", "fontSize", MFnNumericData::kInt, 11, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnNumericAttr.setMin(1));
@@ -876,11 +888,13 @@ Use this function to define any static attributes.
 	PointHelper::controlPoints = fnNumericAttr.create("controlPoints", "controlPoints", PointHelper::xValue, PointHelper::yValue, PointHelper::zValue, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 	
+	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.setArray(true));
+	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::customCategory));
 
 	// Define ".lineWidth" attribute
 	//
-	PointHelper::lineWidth = fnNumericAttr.create("lineWidth", "lw", MFnNumericData::kDouble, DEFAULT_LINE_WIDTH, &status);
+	PointHelper::lineWidth = fnNumericAttr.create("lineWidth", "lw", MFnNumericData::kDouble, 1.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
 	CHECK_MSTATUS(fnNumericAttr.setMin(0.0));

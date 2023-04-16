@@ -15,14 +15,14 @@ Constructor.
 
 	this->enabled = { { "cross", true }, { "box", true } };
 	this->localPosition = MVector(0.0, 0.0, 0.0);
-	this->localRotate = MEulerRotation(0.0, 0.0, 0.0);
+	this->localRotate = MVector(0.0, 0.0, 0.0);
 	this->localScale = MVector(1.0, 1.0, 1.0);
 	this->size = 10;
-	this->objectMatrix = MMatrix::identity;
+	this->objectMatrix = Drawable::createScaleMatrix(this->size);
 	this->choice = 0;
 	this->currentText = MString();
 	this->texts = MStringArray();
-	this->fontSize = 12;
+	this->fontSize = 11;
 	this->lineWidth = 1;
 	this->wireColor = MColor();
 	this->controlPoints = MPointArray();
@@ -47,7 +47,67 @@ Destructor.
 };
 
 
-MStatus PointHelperData::cacheText(const unsigned int index, const MString& text)
+PointHelperData& PointHelperData::operator=(const PointHelperData* src)
+/**
+Assignment operator.
+
+@param src: Point helper data to be copied.
+@return: Self.
+*/
+{
+
+	this->enabled = src->enabled;
+	this->localPosition = src->localPosition;
+	this->localRotate = src->localRotate;
+	this->localScale = src->localScale;
+	this->size = src->size;
+	this->objectMatrix = src->objectMatrix;
+	this->choice = src->choice;
+	this->currentText = src->currentText;
+	this->texts = src->texts;
+	this->fontSize = src->fontSize;
+	this->lineWidth = src->lineWidth;
+	this->wireColor = src->wireColor;
+	this->controlPoints = src->controlPoints;
+	this->fill = src->fill;
+	this->shaded = src->shaded;
+	this->drawOnTop = src->drawOnTop;
+	this->depthPriority = src->depthPriority;
+
+	return *this;
+
+};
+
+
+MStatus PointHelperData::resizeTexts(const unsigned int size)
+/**
+Resizes the text array to ensure there is enough room for specified size.
+
+@param size: The minimum size of the array.
+@return: Return status.
+*/
+{
+
+	MStatus status;
+
+	// Redundancy check
+	//
+	unsigned int count = this->texts.length();
+
+	if (size > count)
+	{
+
+		status = this->texts.setLength(size);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	}
+
+	return status;
+
+};
+
+
+MStatus PointHelperData::allocateText(const unsigned int index, const MString& text)
 /**
 Caches a text value from the supplied text plug element.
 
@@ -58,20 +118,11 @@ Caches a text value from the supplied text plug element.
 
 	MStatus status;
 
-	// Resize text array based on plug index
-	//
-	unsigned int textCount = this->texts.length();
-
-	if (index >= textCount)
-	{
-
-		status = this->texts.setLength(index + 1);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-	}
-
 	// Update text element
 	//
+	status = this->resizeTexts(index + 1);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
 	this->texts[index] = text;
 
 	return status;
@@ -79,7 +130,35 @@ Caches a text value from the supplied text plug element.
 };
 
 
-MStatus PointHelperData::cacheControlPoint(const unsigned int index, const int child, const double value)
+MStatus PointHelperData::resizeControlPoints(const unsigned int size)
+/**
+Resizes the control point array to ensure there is enough room for specified size.
+
+@param size: The minimum size of the array.
+@return: Return status.
+*/
+{
+
+	MStatus status;
+
+	// Redundancy check
+	//
+	unsigned int count = this->controlPoints.length();
+
+	if (size > count)
+	{
+
+		status = this->controlPoints.setLength(size);
+		CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	}
+
+	return status;
+
+};
+
+
+MStatus PointHelperData::allocateControlPoint(const unsigned int index, const MVector& point)
 /**
 Caches a control point from the supplied control-point plug element.
 
@@ -89,20 +168,33 @@ Caches a control point from the supplied control-point plug element.
 {
 	MStatus status;
 
-	// Resize point array based on plug index
+	// Update control point element
 	//
-	unsigned int controlPointCount = this->controlPoints.length();
+	this->resizeControlPoints(index + 1);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	if (index >= controlPointCount)
-	{
+	this->controlPoints[index] = point;
 
-		status = this->controlPoints.setLength(index + 1);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
+	return MS::kSuccess;
 
-	}
+};
+
+
+MStatus PointHelperData::allocateControlPoint(const unsigned int index, const int child, const double value)
+/**
+Caches a control point from the supplied control-point plug element.
+
+@param element: The plug element to cache.
+@return: Return status.
+*/
+{
+	MStatus status;
 
 	// Update control point element
 	//
+	this->resizeControlPoints(index + 1);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
 	this->controlPoints[index][child] = value;
 
 	return MS::kSuccess;
@@ -110,7 +202,7 @@ Caches a control point from the supplied control-point plug element.
 };
 
 
-MStatus PointHelperData::cacheWireColor(const MDagPath& dagPath)
+MStatus PointHelperData::copyWireColor(const MDagPath& dagPath)
 /**
 Caches the wire-colour from the supplied dag path.
 
@@ -119,13 +211,29 @@ Caches the wire-colour from the supplied dag path.
 */
 {
 
+	MStatus status;
+
+	// Check if path is valid
+	//
+	bool isValid = dagPath.isValid(&status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	if (!isValid)
+	{
+
+		return MS::kFailure;
+
+	}
+
+	// Evaluate wire color
+	//
 	this->wireColor = MHWRender::MGeometryUtilities::wireframeColor(dagPath);
 	return MS::kSuccess;
 
 };
 
 
-MStatus PointHelperData::cacheDepthPriority(const MDagPath& dagPath)
+MStatus PointHelperData::copyDepthPriority(const MDagPath& dagPath)
 /**
 Caches the depth priority from the supplied dag path.
 
@@ -134,12 +242,25 @@ Caches the depth priority from the supplied dag path.
 */
 {
 
+	MStatus status;
 
-	// Get correct depth priority
+	// Check if path is valid
 	//
-	MHWRender::DisplayStatus status = MHWRender::MGeometryUtilities::displayStatus(dagPath);
+	bool isValid = dagPath.isValid(&status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	switch (status)
+	if (!isValid)
+	{
+
+		return MS::kFailure;
+
+	}
+
+	// Evaluate display status
+	//
+	MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(dagPath);
+
+	switch (displayStatus)
 	{
 
 	case MHWRender::DisplayStatus::kActiveComponent:
@@ -170,9 +291,9 @@ If the index is out of range then an empty string is used.
 
 	// Check if choice is within range
 	//
-	int textCount = this->texts.length();
+	unsigned int textCount = this->texts.length();
 
-	if (0u <= this->choice < textCount)
+	if (0u <= this->choice && this->choice < textCount)
 	{
 
 		this->currentText = this->texts[this->choice];
@@ -195,9 +316,9 @@ Updates the internal object-matrix.
 @return: Null.
 */
 {
-
+	
 	MMatrix positionMatrix = Drawable::createPositionMatrix(this->localPosition);
-	MMatrix rotateMatrix = this->localRotate.asMatrix();
+	MMatrix rotateMatrix = Drawable::createRotationMatrix(this->localRotate);
 	MMatrix scaleMatrix = Drawable::createScaleMatrix(this->localScale);
 	MMatrix sizeMatrix = Drawable::createScaleMatrix(this->size);
 
