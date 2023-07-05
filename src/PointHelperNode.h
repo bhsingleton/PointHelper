@@ -75,6 +75,7 @@ public:
 	virtual	void				getCacheSetup(const MEvaluationNode& evaluationNode, MNodeCacheDisablingInfo& disablingInfo, MNodeCacheSetupInfo& cacheSetupInfo, MObjectArray& monitoredAttributes) const;
 
 	virtual	bool				setInternalValue(const MPlug& plug, const MDataHandle& handle);
+	virtual	void				copyInternalData(MPxNode* node);
 	virtual PointHelperData*	getUserData();
 
 	virtual	bool				isBounded() const;

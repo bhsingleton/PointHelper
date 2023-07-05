@@ -544,6 +544,23 @@ Another use for this method is to impose attribute limits.
 };
 
 
+void PointHelper::copyInternalData(MPxNode* node)
+/**
+This method is overridden by nodes that store attribute data in some internal format.
+On duplication this method is called on the duplicated node with the node being duplicated passed as the parameter. 
+Overriding this method gives your node a chance to duplicate any internal data you've been storing and manipulating outside of normal attribute data.
+
+@param node: The node that is being duplicated.
+@return: Void.
+*/
+{
+
+	PointHelper* pointHelper = static_cast<PointHelper*>(node);
+	this->data = pointHelper->getUserData();
+
+};
+
+
 PointHelperData* PointHelper::getUserData()
 /**
 Returns a pointer to the internal point helper data.
