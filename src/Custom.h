@@ -22,7 +22,7 @@ public:
 
 protected:
 
-			MPointArray		points;
+			MVectorArray	points;
 
 };
 #endif

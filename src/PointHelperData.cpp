@@ -25,7 +25,7 @@ Constructor.
 	this->fontSize = 11;
 	this->lineWidth = 1;
 	this->wireColor = MColor();
-	this->controlPoints = MPointArray();
+	this->controlPoints = MVectorArray();
 	this->fill = false;
 	this->shaded = false;
 	this->drawOnTop = false;

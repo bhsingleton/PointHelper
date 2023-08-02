@@ -308,6 +308,256 @@ Provide node-specific setup info for the Cached Playback system.
 };
 
 
+bool PointHelper::getInternalValue(const MPlug& plug, MDataHandle& handle)
+/**
+This method is overridden by nodes that store attribute data in some internal format.
+The internal state of attributes can be set or queried using the setInternal and internal methods of MFnAttribute.
+When internal attribute values are queried via getAttr or MPlug::getValue this method is called.
+
+@param plug: The attribute that is being queried.
+@param handle: The data handle to store the attribute value.
+@return: The attribute was placed in the datablock.
+*/
+{
+
+	MStatus status;
+
+	// Evaluate attribute category
+	//
+	MObject attribute = plug.attribute(&status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	MFnAttribute fnAttribute(attribute, &status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	bool isLocalPosition = fnAttribute.hasCategory(PointHelper::localPositionCategory);
+	bool isLocalRotation = fnAttribute.hasCategory(PointHelper::localRotationCategory);
+	bool isLocalScale = fnAttribute.hasCategory(PointHelper::localScaleCategory);
+	bool isDrawable = fnAttribute.hasCategory(PointHelper::drawableCategory);
+	bool isText = fnAttribute.hasCategory(PointHelper::textCategory);
+	bool isCustom = fnAttribute.hasCategory(PointHelper::customCategory);
+	bool isRender = fnAttribute.hasCategory(PointHelper::renderCategory);
+
+	if (isLocalPosition)
+	{
+
+		if (attribute == PointHelper::localPosition)
+		{
+
+			handle.setMVector(this->data->localPosition);
+
+		}
+		else if (attribute == PointHelper::localPositionX)
+		{
+
+			handle.setMDistance(MDistance(this->data->localPosition.x, MDistance::kCentimeters));
+
+		}
+		else if (attribute == PointHelper::localPositionY)
+		{
+
+			handle.setMDistance(MDistance(this->data->localPosition.y, MDistance::kCentimeters));
+
+		}
+		else if (attribute == PointHelper::localPositionZ)
+		{
+
+			handle.setMDistance(MDistance(this->data->localPosition.z, MDistance::kCentimeters));
+
+		}
+		else;
+
+		return true;
+
+	}
+	else if (isLocalRotation)
+	{
+
+		if (attribute == PointHelper::localRotate)
+		{
+
+			handle.setMVector(this->data->localRotate);
+
+		}
+		else if (attribute == PointHelper::localRotateX)
+		{
+
+			handle.setMAngle(MAngle(this->data->localRotate.x, MAngle::kRadians));
+
+		}
+		else if (attribute == PointHelper::localRotateY)
+		{
+
+			handle.setMAngle(MAngle(this->data->localRotate.y, MAngle::kRadians));
+
+		}
+		else if (attribute == PointHelper::localRotateZ)
+		{
+
+			handle.setMAngle(MAngle(this->data->localRotate.z, MAngle::kRadians));
+
+		}
+		else;
+
+		return true;
+
+	}
+	else if (isLocalScale)
+	{
+
+		if (attribute == PointHelper::localScale)
+		{
+
+			handle.setMVector(this->data->localScale);
+
+		}
+		else if (attribute == PointHelper::localScaleX)
+		{
+
+			handle.setMDistance(MDistance(this->data->localScale.x, MDistance::kCentimeters));
+
+		}
+		else if (attribute == PointHelper::localScaleY)
+		{
+
+			handle.setMDistance(MDistance(this->data->localScale.y, MDistance::kCentimeters));
+
+		}
+		else if (attribute == PointHelper::localScaleZ)
+		{
+
+			handle.setMDistance(MDistance(this->data->localScale.z, MDistance::kCentimeters));
+
+		}
+		else;
+
+		return true;
+
+	}
+	else if (isDrawable)
+	{
+
+		std::string name = fnAttribute.name().asChar();
+		handle.setBool(this->data->enabled[name]);
+
+		return true;
+
+	}
+	else if (isText)
+	{
+
+		if (attribute == PointHelper::choice)
+		{
+
+			 handle.setInt(this->data->choice);
+
+		}
+		else if (attribute == PointHelper::text)
+		{
+
+			handle.setString(this->data->currentText);
+
+		}
+		else if (attribute == PointHelper::fontSize)
+		{
+
+			handle.setDouble(this->data->fontSize);
+
+		}
+		else;
+
+		return true;
+
+	}
+	else if (isCustom)
+	{
+		
+		if (attribute == PointHelper::controlPoints)
+		{
+
+			bool isElement = plug.isElement(&status);
+			CHECK_MSTATUS_AND_RETURN(status, false);
+
+			if (isElement)
+			{
+
+				unsigned int index = plug.logicalIndex();
+				handle.setMVector(this->data->controlPoints[index]);
+
+			}
+
+		}
+		else if (attribute == PointHelper::xValue)
+		{
+
+			unsigned int index = plug.parent().logicalIndex();
+			handle.setDouble(this->data->controlPoints[index].x);
+
+		}
+		else if (attribute == PointHelper::yValue)
+		{
+
+			unsigned int index = plug.parent().logicalIndex();
+			handle.setDouble(this->data->controlPoints[index].y);
+
+		}
+		else if (attribute == PointHelper::zValue)
+		{
+
+			unsigned int index = plug.parent().logicalIndex();
+			handle.setDouble(this->data->controlPoints[index].z);
+
+		}
+		else;
+
+		return true;
+
+	}
+	else if (isRender)
+	{
+
+		if (attribute == PointHelper::size)
+		{
+
+			handle.setDouble(this->data->size);
+
+		}
+		else if (attribute == PointHelper::lineWidth)
+		{
+
+			handle.setDouble(this->data->lineWidth);
+
+		}
+		else if (attribute == PointHelper::fill)
+		{
+
+			handle.setBool(this->data->fill);
+
+		}
+		else if (attribute == PointHelper::shaded)
+		{
+
+			handle.setBool(this->data->shaded);
+
+		}
+		else if (attribute == PointHelper::drawOnTop)
+		{
+
+			handle.setBool(this->data->drawOnTop);
+
+		}
+		else;
+
+		return true;
+
+	}
+	else;
+
+	return MPxLocatorNode::getInternalValue(plug, handle);
+
+};
+
+
 bool PointHelper::setInternalValue(const MPlug& plug, const MDataHandle& handle)
 /**
 This method is overridden by nodes that store attribute specs in some internal format.
@@ -316,8 +566,8 @@ When internal attribute values are set via setAttr or MPlug::setValue this metho
 Another use for this method is to impose attribute limits.
 
 @param plug: The attribute that is being set.
-@param handle: The specsHandle containing the value to set.
-@return: 
+@param handle: The data handle containing the value to set.
+@return: The attribute was handled internally.
 */
 {
 
@@ -369,6 +619,7 @@ Another use for this method is to impose attribute limits.
 		else;
 
 		this->data->dirtyObjectMatrix();
+		return true;
 
 	}
 	else if (isLocalRotation)
@@ -401,6 +652,7 @@ Another use for this method is to impose attribute limits.
 		else;
 
 		this->data->dirtyObjectMatrix();
+		return true;
 
 	}
 	else if (isLocalScale)
@@ -433,6 +685,7 @@ Another use for this method is to impose attribute limits.
 		else;
 
 		this->data->dirtyObjectMatrix();
+		return true;
 
 	}
 	else if (isDrawable)
@@ -440,6 +693,8 @@ Another use for this method is to impose attribute limits.
 
 		std::string name = fnAttribute.name().asChar();
 		this->data->enabled[name] = handle.asBool();
+
+		return true;
 
 	}
 	else if (isText)
@@ -467,7 +722,7 @@ Another use for this method is to impose attribute limits.
 		}
 		else;
 
-		
+		return true;
 
 	}
 	else if (isCustom)
@@ -498,6 +753,8 @@ Another use for this method is to impose attribute limits.
 
 		}
 		else;
+
+		return true;
 
 	}
 	else if (isRender)
@@ -535,6 +792,8 @@ Another use for this method is to impose attribute limits.
 
 		}
 		else;
+
+		return true;
 
 	}
 	else;
@@ -637,7 +896,7 @@ Use this function to define any static attributes.
 	MFnCompoundAttribute fnCompoundAttr;
 	MFnMatrixAttribute fnMatrixAttr;
 	MFnTypedAttribute fnTypedAttr;
-
+	
 	// Input attributes:
 	// Edit ".localPositionX" attribute
 	//
@@ -670,7 +929,7 @@ Use this function to define any static attributes.
 
 	CHECK_MSTATUS(fnNumericAttr.setInternal(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::localPositionCategory));
-
+	
 	// Define ".localRotateX" attribute
 	//
 	PointHelper::localRotateX = fnUnitAttr.create("localRotateX", "lorx", MFnUnitAttribute::kAngle, 0.0, &status);

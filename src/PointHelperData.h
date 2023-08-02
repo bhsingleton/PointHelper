@@ -72,7 +72,7 @@ public:
 
 			float				lineWidth;
 			MColor				wireColor;
-			MPointArray			controlPoints;
+			MVectorArray		controlPoints;
 
 			bool				fill;
 			bool				shaded;

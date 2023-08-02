@@ -34,10 +34,15 @@ Draws a custom shape stored inside the data pointer.
 
 	// Draw line through points
 	//
+	MPoint startPoint, endPoint;
+
 	for (unsigned int i = 0; i < (numPoints - 1); i++) 
 	{
 
-		drawManager.line(pointHelperData->controlPoints[i], pointHelperData->controlPoints[i + 1]);
+		startPoint = pointHelperData->controlPoints[i];
+		endPoint = pointHelperData->controlPoints[i + 1];
+
+		drawManager.line(startPoint, endPoint);
 
 	}
 
