@@ -23,6 +23,8 @@ set(
 	"Cross.cpp"
 	"Cylinder.h"
 	"Cylinder.cpp"
+	"Pyramid.h"
+	"Pyramid.cpp"
 	"Diamond.h"
 	"Diamond.cpp"
 	"Notch.h"

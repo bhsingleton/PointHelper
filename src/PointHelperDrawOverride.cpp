@@ -8,11 +8,14 @@
 
 #include "Arrow.h"
 #include "AxisTripod.h"
+#include "AxisView.h"
 #include "Box.h"
 #include "CenterMarker.h"
 #include "Cross.h"
 #include "Custom.h"
 #include "Cylinder.h"
+#include "Triangle.h"
+#include "Pyramid.h"
 #include "Diamond.h"
 #include "Disc.h"
 #include "Notch.h"
@@ -61,11 +64,14 @@ Constructor.
 		//
 		this->drawables.insert(std::make_pair("arrow", new Arrow()));
 		this->drawables.insert(std::make_pair("axisTripod", new AxisTripod()));
+		this->drawables.insert(std::make_pair("axisView", new AxisView()));
 		this->drawables.insert(std::make_pair("box", new Box()));
 		this->drawables.insert(std::make_pair("centerMarker", new CenterMarker()));
 		this->drawables.insert(std::make_pair("cross", new Cross()));
 		this->drawables.insert(std::make_pair("custom", new Custom()));
 		this->drawables.insert(std::make_pair("cylinder", new Cylinder()));
+		this->drawables.insert(std::make_pair("triangle", new Triangle()));
+		this->drawables.insert(std::make_pair("pyramid", new Pyramid()));
 		this->drawables.insert(std::make_pair("diamond", new Diamond()));
 		this->drawables.insert(std::make_pair("disc", new Disc()));
 		this->drawables.insert(std::make_pair("notch", new Notch()));
@@ -250,6 +256,7 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 	// Cache internal values
 	//
 	*pointHelperData = this->pointHelper->getUserData();
+	pointHelperData->copyObjectMatrix(objPath);
 	pointHelperData->copyWireColor(objPath);
 	pointHelperData->copyDepthPriority(objPath);
 

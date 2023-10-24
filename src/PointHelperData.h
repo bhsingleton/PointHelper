@@ -43,12 +43,15 @@ public:
 	virtual	PointHelperData&	operator=(const PointHelperData* src);
 
 	virtual	MStatus				resizeTexts(const unsigned int size);
-	virtual	MStatus				allocateText(const unsigned int index, const MString& text);
+	virtual	MString				getText(const unsigned int index);
+	virtual	MStatus				setText(const unsigned int index, const MString& text);
 
 	virtual	MStatus				resizeControlPoints(const unsigned int size);
-	virtual	MStatus				allocateControlPoint(const unsigned int index, const MVector& point);
-	virtual	MStatus				allocateControlPoint(const unsigned int index, const int child, const double value);
+	virtual	MVector				getControlPoint(const unsigned int index);
+	virtual	MStatus				setControlPoint(const unsigned int index, const MVector& point);
+	virtual	MStatus				setControlPoint(const unsigned int index, const int axis, const double value);
 
+	virtual	MStatus				copyObjectMatrix(const MDagPath& objPath);
 	virtual	MStatus				copyWireColor(const MDagPath& objPath);
 	virtual	MStatus				copyDepthPriority(const MDagPath& dagPath);
 

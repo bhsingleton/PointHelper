@@ -80,6 +80,9 @@ public:
 	virtual	bool				setInternalValue(const MPlug& plug, const MDataHandle& handle);
 	virtual	void				copyInternalData(MPxNode* node);
 	virtual PointHelperData*	getUserData();
+	static	MMatrix				getMatrixData(const MObject& data);
+
+	virtual	MDagPath			thisMDagPath() const;
 
 	virtual	bool				isBounded() const;
 	virtual	MBoundingBox		boundingBox() const;
@@ -96,9 +99,11 @@ public:
 
 	static  MObject				centerMarker;
 	static  MObject				axisTripod;
+	static  MObject				axisView;
 	static  MObject				cross;
 	static	MObject				square;
 	static  MObject				box;
+	static  MObject				triangle;
 	static  MObject				pyramid;
 	static	MObject				diamond;
 	static  MObject				disc;

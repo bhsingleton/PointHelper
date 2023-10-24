@@ -5,6 +5,7 @@
 //
 
 #include "PointHelperData.h"
+#include "PointHelperNode.h"
 
 
 PointHelperData::PointHelperData() : MUserData(false)
@@ -107,11 +108,39 @@ Resizes the text array to ensure there is enough room for specified size.
 };
 
 
-MStatus PointHelperData::allocateText(const unsigned int index, const MString& text)
+MString PointHelperData::getText(const unsigned int index)
 /**
-Caches a text value from the supplied text plug element.
+Returns the text value at the specified index.
 
-@param element: The plug element to cache.
+@param index: The index to return.
+@return: The text value.
+*/
+{
+
+	unsigned int size = this->controlPoints.length();
+
+	if (0 <= index && index < size)
+	{
+
+		return this->texts[index];
+
+	}
+	else
+	{
+
+		return MString("");
+
+	}
+
+};
+
+
+MStatus PointHelperData::setText(const unsigned int index, const MString& text)
+/**
+Updates the text value at the specified index.
+
+@param index: The index to update.
+@param text: The text value to assign.
 @return: Return status.
 */
 {
@@ -134,7 +163,7 @@ MStatus PointHelperData::resizeControlPoints(const unsigned int size)
 /**
 Resizes the control point array to ensure there is enough room for specified size.
 
-@param size: The minimum size of the array.
+@param size: The requested array size.
 @return: Return status.
 */
 {
@@ -158,11 +187,39 @@ Resizes the control point array to ensure there is enough room for specified siz
 };
 
 
-MStatus PointHelperData::allocateControlPoint(const unsigned int index, const MVector& point)
+MVector PointHelperData::getControlPoint(const unsigned int index)
 /**
-Caches a control point from the supplied control-point plug element.
+Returns the control point at the specified index.
 
-@param element: The plug element to cache.
+@param index: The index to return.
+@return: The control point.
+*/
+{
+
+	unsigned int size = this->controlPoints.length();
+
+	if (0 <= index && index < size)
+	{
+
+		return this->controlPoints[index];
+
+	}
+	else
+	{
+
+		return MVector::zero;
+
+	}
+
+};
+
+
+MStatus PointHelperData::setControlPoint(const unsigned int index, const MVector& point)
+/**
+Updates the control point at the specified index.
+
+@param index: The index to update.
+@param point: The control point to assign.
 @return: Return status.
 */
 {
@@ -180,11 +237,13 @@ Caches a control point from the supplied control-point plug element.
 };
 
 
-MStatus PointHelperData::allocateControlPoint(const unsigned int index, const int child, const double value)
+MStatus PointHelperData::setControlPoint(const unsigned int index, const int axis, const double value)
 /**
-Caches a control point from the supplied control-point plug element.
+Updates the control point at the specified indexed axis.
 
-@param element: The plug element to cache.
+@param index: The index to update.
+@param axis: The axis to update.
+@param point: The control point to assign.
 @return: Return status.
 */
 {
@@ -195,16 +254,61 @@ Caches a control point from the supplied control-point plug element.
 	this->resizeControlPoints(index + 1);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
-	this->controlPoints[index][child] = value;
+	this->controlPoints[index][axis] = value;
 
 	return MS::kSuccess;
 
 };
 
 
+MStatus PointHelperData::copyObjectMatrix(const MDagPath& dagPath)
+/**
+Copies the object-matrix from the supplied dag path.
+
+@param dagPath: A path to the point helper.
+@return: Return status.
+*/
+{
+	
+	MStatus status;
+
+	// Check if path is valid
+	//
+	bool isValid = dagPath.isValid(&status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	if (!isValid)
+	{
+
+		return MS::kFailure;
+
+	}
+
+	// Get object matrix
+	//
+	MObject node = dagPath.node(&status);
+	CHECK_MSTATUS_AND_RETURN_IT(status);
+
+	MPlug positionPlug = MPlug(node, PointHelper::localPosition);
+	MPlug rotatePlug = MPlug(node, PointHelper::localRotate);
+	MPlug scalePlug = MPlug(node, PointHelper::localScale);
+	MPlug sizePlug = MPlug(node, PointHelper::size);
+
+	this->localPosition = MVector(positionPlug.child(0).asDouble(), positionPlug.child(1).asDouble(), positionPlug.child(2).asDouble());
+	this->localRotate = MVector(rotatePlug.child(0).asDouble(), rotatePlug.child(1).asDouble(), rotatePlug.child(2).asDouble());
+	this->localScale = MVector(scalePlug.child(0).asDouble(), scalePlug.child(1).asDouble(), scalePlug.child(2).asDouble());
+	this->size = sizePlug.asDouble();
+
+	this->dirtyObjectMatrix();
+
+	return status;
+
+};
+
+
 MStatus PointHelperData::copyWireColor(const MDagPath& dagPath)
 /**
-Caches the wire-colour from the supplied dag path.
+Copies the wire-colour from the supplied dag path.
 
 @param dagPath: A path to the point helper.
 @return: Return status.
@@ -235,7 +339,7 @@ Caches the wire-colour from the supplied dag path.
 
 MStatus PointHelperData::copyDepthPriority(const MDagPath& dagPath)
 /**
-Caches the depth priority from the supplied dag path.
+Copies the depth priority from the supplied dag path.
 
 @param dagPath: A path to the point helper.
 @return: Return status.

@@ -86,7 +86,7 @@ Prepares to draw a square.
 
 void Square::draw(MHWRender::MUIDrawManager& drawManager, const MHWRender::MFrameContext& frameContext, const PointHelperData* pointHelperData)
 /**
-Draws a box.
+Draws a square.
 
 @param drawManager: Interface used for drawing basic shapes inside the viewport.
 @param frameContext: Contains global information for the current render frame.
