@@ -39,8 +39,8 @@ Draws a custom shape stored inside the data pointer.
 	for (unsigned int i = 0; i < (numPoints - 1); i++) 
 	{
 
-		startPoint = pointHelperData->controlPoints[i];
-		endPoint = pointHelperData->controlPoints[i + 1];
+		startPoint = pointHelperData->controlPoints[i] * pointHelperData->objectMatrix;
+		endPoint = pointHelperData->controlPoints[i + 1] * pointHelperData->objectMatrix;
 
 		drawManager.line(startPoint, endPoint);
 
