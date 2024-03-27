@@ -553,10 +553,12 @@ Another use for this method is to impose attribute limits.
 	else if (isCustom)
 	{
 		
+		MGlobal::displayInfo(plug.info());
+
 		if (attribute == PointHelper::controlPoints)
 		{
 
-			this->data->setControlPoint(plug.parent().logicalIndex(), handle.asVector());
+			this->data->setControlPoint(plug.logicalIndex(), handle.asVector());
 
 		}
 		else if (attribute == PointHelper::xValue)
@@ -633,7 +635,13 @@ Overriding this method gives your node a chance to duplicate any internal data y
 {
 
 	PointHelper* pointHelper = static_cast<PointHelper*>(node);
-	this->data = pointHelper->getUserData();
+
+	if (pointHelper != nullptr)
+	{
+
+		*this->data = pointHelper->getUserData();
+
+	}
 
 };
 
@@ -861,6 +869,7 @@ Use this function to define any static attributes.
 	PointHelper::size = fnNumericAttr.create("size", "size", MFnNumericData::kDouble, 10.0, &status);
 	CHECK_MSTATUS_AND_RETURN_IT(status);
 
+	CHECK_MSTATUS(fnNumericAttr.setChannelBox(true));
 	CHECK_MSTATUS(fnNumericAttr.addToCategory(PointHelper::renderCategory));
 
 	// Define ".centerMarker" attribute
