@@ -9,7 +9,6 @@
 //
 
 #include "Drawable.h"
-#include "PointHelperData.h"
 
 #include <maya/MPxLocatorNode.h>
 #include <maya/MObject.h>
@@ -76,12 +75,7 @@ public:
 	virtual	MStatus				preEvaluation(const MDGContext& context, const MEvaluationNode& evaluationNode);
 	virtual	void				getCacheSetup(const MEvaluationNode& evaluationNode, MNodeCacheDisablingInfo& disablingInfo, MNodeCacheSetupInfo& cacheSetupInfo, MObjectArray& monitoredAttributes) const;
 
-	virtual	bool				getInternalValue(const MPlug& plug, MDataHandle& handle);
-	virtual	bool				setInternalValue(const MPlug& plug, const MDataHandle& handle);
-	virtual	void				copyInternalData(MPxNode* node);
-	virtual PointHelperData*	getUserData();
 	static	MMatrix				getMatrixData(const MObject& data);
-
 	virtual	MDagPath			thisMDagPath() const;
 
 	virtual	bool				isBounded() const;
@@ -143,10 +137,6 @@ public:
 	static	MString				drawDbClassification;
 	static	MString				drawRegistrantId;
 	static	MTypeId				id;
-
-protected:
-
-			PointHelperData*	data;
 
 };
 

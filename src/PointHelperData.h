@@ -7,6 +7,7 @@
 //
 
 #include "Drawable.h"
+#include "PointHelperNode.h"
 
 #include <maya/MUserData.h>
 #include <maya/MPlug.h>
@@ -37,50 +38,35 @@ class PointHelperData : public MUserData
 
 public:
 
-								PointHelperData();
-	virtual						~PointHelperData();
+						PointHelperData();
+	virtual				~PointHelperData();
 
-	virtual	PointHelperData&	operator=(const PointHelperData* src);
-
-	virtual	MStatus				resizeTexts(const unsigned int size);
-	virtual	MString				getText(const unsigned int index);
-	virtual	MStatus				setText(const unsigned int index, const MString& text);
-
-	virtual	MStatus				resizeControlPoints(const unsigned int size);
-	virtual	MVector				getControlPoint(const unsigned int index);
-	virtual	MStatus				setControlPoint(const unsigned int index, const MVector& point);
-	virtual	MStatus				setControlPoint(const unsigned int index, const int axis, const double value);
-
-	virtual	MStatus				copyObjectMatrix(const MDagPath& objPath);
-	virtual	MStatus				copyWireColor(const MDagPath& objPath);
-	virtual	MStatus				copyDepthPriority(const MDagPath& dagPath);
-
-	virtual	void				dirtyCurrentText();
-	virtual	void				dirtyObjectMatrix();
+	virtual	MStatus		copyInternalData(const MDagPath& objPath);
+	virtual	MStatus		copyObjectMatrix(const MDagPath& objPath);
+	virtual	MStatus		copyWireColor(const MDagPath& objPath);
+	virtual	MStatus		copyDepthPriority(const MDagPath& dagPath);
 
 public:
 			
-			std::map<std::string, bool>	enabled;
+			std::map<std::string, bool>		enabled;
 
-			MVector				localPosition;
-			MVector				localRotate;
-			MVector				localScale;
-			double				size;
-			MMatrix				objectMatrix;
+			double							size;
+			MVector							localPosition;
+			MVector							localRotate;
+			MVector							localScale;
+			MMatrix							objectMatrix;
 
-			unsigned int		choice;
-			MString				currentText;
-			MStringArray		texts;
-			int					fontSize;
+			MString							text;
+			int								fontSize;
 
-			float				lineWidth;
-			MColor				wireColor;
-			MVectorArray		controlPoints;
+			MColor							wireColor;
+			float							lineWidth;
+			bool							fill;
+			bool							shaded;
+			bool							drawOnTop;
+			unsigned int					depthPriority;
 
-			bool				fill;
-			bool				shaded;
-			bool				drawOnTop;
-			unsigned int		depthPriority;
+			MVectorArray					controlPoints;
 
 };
 #endif

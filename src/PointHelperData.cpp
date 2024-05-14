@@ -8,7 +8,7 @@
 #include "PointHelperNode.h"
 
 
-PointHelperData::PointHelperData() : MUserData(false)
+PointHelperData::PointHelperData() : MUserData(true)
 /**
 Constructor.
 */
@@ -20,9 +20,7 @@ Constructor.
 	this->localScale = MVector(1.0, 1.0, 1.0);
 	this->size = 10;
 	this->objectMatrix = Drawable::createScaleMatrix(this->size);
-	this->choice = 0;
-	this->currentText = MString();
-	this->texts = MStringArray();
+	this->text = MString();
 	this->fontSize = 11;
 	this->lineWidth = 1;
 	this->wireColor = MColor();
@@ -42,13 +40,12 @@ Destructor.
 {
 
 	this->enabled.clear();
-	this->texts.clear();
 	this->controlPoints.clear();
 
 };
 
 
-PointHelperData& PointHelperData::operator=(const PointHelperData* src)
+MStatus PointHelperData::copyInternalData(const MDagPath& dagPath)
 /**
 Assignment operator.
 
@@ -57,204 +54,60 @@ Assignment operator.
 */
 {
 
-	this->enabled = src->enabled;
-	this->localPosition = src->localPosition;
-	this->localRotate = src->localRotate;
-	this->localScale = src->localScale;
-	this->size = src->size;
-	this->objectMatrix = src->objectMatrix;
-	this->choice = src->choice;
-	this->currentText = src->currentText;
-	this->texts = src->texts;
-	this->fontSize = src->fontSize;
-	this->lineWidth = src->lineWidth;
-	this->wireColor = src->wireColor;
-	this->controlPoints = src->controlPoints;
-	this->fill = src->fill;
-	this->shaded = src->shaded;
-	this->drawOnTop = src->drawOnTop;
-	this->depthPriority = src->depthPriority;
-
-	return *this;
-
-};
-
-
-MStatus PointHelperData::resizeTexts(const unsigned int size)
-/**
-Resizes the text array to ensure there is enough room for specified size.
-
-@param size: The minimum size of the array.
-@return: Return status.
-*/
-{
-
-	MStatus status;
-
-	// Redundancy check
+	// Get associated node from path
 	//
-	unsigned int count = this->texts.length();
-
-	if (size > count)
-	{
-
-		status = this->texts.setLength(size);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
-
-	}
-
-	return status;
-
-};
-
-
-MString PointHelperData::getText(const unsigned int index)
-/**
-Returns the text value at the specified index.
-
-@param index: The index to return.
-@return: The text value.
-*/
-{
-
-	unsigned int size = this->controlPoints.length();
-
-	if (0 <= index && index < size)
-	{
-
-		return this->texts[index];
-
-	}
-	else
-	{
-
-		return MString("");
-
-	}
-
-};
-
-
-MStatus PointHelperData::setText(const unsigned int index, const MString& text)
-/**
-Updates the text value at the specified index.
-
-@param index: The index to update.
-@param text: The text value to assign.
-@return: Return status.
-*/
-{
-
-	MStatus status;
-
-	// Update text element
+	MObject node = dagPath.node();
+	
+	// Copy drawable properties
 	//
-	status = this->resizeTexts(index + 1);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
+	this->enabled["centerMarker"] = MPlug(node, PointHelper::centerMarker).asBool();
+	this->enabled["axisTripod"] = MPlug(node, PointHelper::axisTripod).asBool();
+	this->enabled["axisView"] = MPlug(node, PointHelper::axisView).asBool();
+	this->enabled["cross"] = MPlug(node, PointHelper::cross).asBool();
+	this->enabled["square"] = MPlug(node, PointHelper::square).asBool();
+	this->enabled["box"] = MPlug(node, PointHelper::box).asBool();
+	this->enabled["triangle"] = MPlug(node, PointHelper::triangle).asBool();
+	this->enabled["pyramid"] = MPlug(node, PointHelper::pyramid).asBool();
+	this->enabled["diamond"] = MPlug(node, PointHelper::diamond).asBool();
+	this->enabled["disc"] = MPlug(node, PointHelper::disc).asBool();
+	this->enabled["arrow"] = MPlug(node, PointHelper::arrow).asBool();
+	this->enabled["notch"] = MPlug(node, PointHelper::notch).asBool();
+	this->enabled["tearDrop"] = MPlug(node, PointHelper::tearDrop).asBool();
+	this->enabled["cylinder"] = MPlug(node, PointHelper::cylinder).asBool();
+	this->enabled["sphere"] = MPlug(node, PointHelper::sphere).asBool();
+	this->enabled["custom"] = MPlug(node, PointHelper::custom).asBool();
 
-	this->texts[index] = text;
-
-	return status;
-
-};
-
-
-MStatus PointHelperData::resizeControlPoints(const unsigned int size)
-/**
-Resizes the control point array to ensure there is enough room for specified size.
-
-@param size: The requested array size.
-@return: Return status.
-*/
-{
-
-	MStatus status;
-
-	// Redundancy check
+	// Copy text properties
 	//
-	unsigned int count = this->controlPoints.length();
+	MPlug textPlug = MPlug(node, PointHelper::text);
+	unsigned int choice = MPlug(node, PointHelper::choice).asInt();
 
-	if (size > count)
+	this->text = textPlug.elementByLogicalIndex(choice).asString();
+	this->fontSize = MPlug(node, PointHelper::fontSize).asInt();
+	
+	// Copy render properties
+	//
+	this->fill = MPlug(node, PointHelper::fill).asBool();
+	this->shaded = MPlug(node, PointHelper::shaded).asBool();
+	this->drawOnTop = MPlug(node, PointHelper::drawOnTop).asBool();
+	this->lineWidth = MPlug(node, PointHelper::lineWidth).asDouble();
+
+	// Copy control points
+	//
+	MPlug controlPointsPlug = MPlug(node, PointHelper::controlPoints);
+
+	unsigned int numElements = controlPointsPlug.evaluateNumElements();
+	this->controlPoints.setLength(numElements);
+
+	MPlug controlPointElement;
+
+	for (unsigned int i = 0; i < numElements; i++)
 	{
 
-		status = this->controlPoints.setLength(size);
-		CHECK_MSTATUS_AND_RETURN_IT(status);
+		controlPointElement = controlPointsPlug.elementByPhysicalIndex(i);
+		this->controlPoints[i] = MVector(controlPointElement.child(0).asDouble(), controlPointElement.child(1).asDouble(), controlPointElement.child(2).asDouble());
 
 	}
-
-	return status;
-
-};
-
-
-MVector PointHelperData::getControlPoint(const unsigned int index)
-/**
-Returns the control point at the specified index.
-
-@param index: The index to return.
-@return: The control point.
-*/
-{
-
-	unsigned int size = this->controlPoints.length();
-
-	if (0 <= index && index < size)
-	{
-
-		return this->controlPoints[index];
-
-	}
-	else
-	{
-
-		return MVector::zero;
-
-	}
-
-};
-
-
-MStatus PointHelperData::setControlPoint(const unsigned int index, const MVector& point)
-/**
-Updates the control point at the specified index.
-
-@param index: The index to update.
-@param point: The control point to assign.
-@return: Return status.
-*/
-{
-	MStatus status;
-
-	// Update control point element
-	//
-	this->resizeControlPoints(index + 1);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-
-	this->controlPoints[index] = point;
-
-	return MS::kSuccess;
-
-};
-
-
-MStatus PointHelperData::setControlPoint(const unsigned int index, const int axis, const double value)
-/**
-Updates the control point at the specified indexed axis.
-
-@param index: The index to update.
-@param axis: The axis to update.
-@param point: The control point to assign.
-@return: Return status.
-*/
-{
-	MStatus status;
-
-	// Update control point element
-	//
-	this->resizeControlPoints(index + 1);
-	CHECK_MSTATUS_AND_RETURN_IT(status);
-
-	this->controlPoints[index][axis] = value;
 
 	return MS::kSuccess;
 
@@ -299,7 +152,12 @@ Copies the object-matrix from the supplied dag path.
 	this->localScale = MVector(scalePlug.child(0).asDouble(), scalePlug.child(1).asDouble(), scalePlug.child(2).asDouble());
 	this->size = sizePlug.asDouble();
 
-	this->dirtyObjectMatrix();
+	MMatrix positionMatrix = Drawable::createPositionMatrix(this->localPosition);
+	MMatrix rotateMatrix = Drawable::createRotationMatrix(this->localRotate);
+	MMatrix scaleMatrix = Drawable::createScaleMatrix(this->localScale);
+	MMatrix sizeMatrix = Drawable::createScaleMatrix(this->size);
+
+	this->objectMatrix = sizeMatrix * scaleMatrix * rotateMatrix * positionMatrix;
 
 	return status;
 
@@ -380,52 +238,5 @@ Copies the depth priority from the supplied dag path.
 	}
 
 	return MS::kSuccess;
-
-};
-
-
-void PointHelperData::dirtyCurrentText()
-/**
-Updates the current text value based on the associated choice index.
-If the index is out of range then an empty string is used.
-
-@return: Return status.
-*/
-{
-
-	// Check if choice is within range
-	//
-	unsigned int textCount = this->texts.length();
-
-	if (0u <= this->choice && this->choice < textCount)
-	{
-
-		this->currentText = this->texts[this->choice];
-
-	}
-	else
-	{
-
-		this->currentText = MString();
-
-	}
-
-};
-
-
-void PointHelperData::dirtyObjectMatrix()
-/**
-Updates the internal object-matrix.
-
-@return: Null.
-*/
-{
-	
-	MMatrix positionMatrix = Drawable::createPositionMatrix(this->localPosition);
-	MMatrix rotateMatrix = Drawable::createRotationMatrix(this->localRotate);
-	MMatrix scaleMatrix = Drawable::createScaleMatrix(this->localScale);
-	MMatrix sizeMatrix = Drawable::createScaleMatrix(this->size);
-
-	this->objectMatrix = sizeMatrix * scaleMatrix * rotateMatrix * positionMatrix;
 
 };

@@ -51,6 +51,7 @@ Constructor.
 
 	// Check if drawables have been initialized
 	//
+	
 	size_t numItems = this->drawables.size();
 
 	if (numItems == 0 && this->pointHelper != nullptr)
@@ -255,7 +256,7 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 
 	// Cache internal values
 	//
-	*pointHelperData = this->pointHelper->getUserData();
+	pointHelperData->copyInternalData(objPath);
 	pointHelperData->copyObjectMatrix(objPath);
 	pointHelperData->copyWireColor(objPath);
 	pointHelperData->copyDepthPriority(objPath);
@@ -267,7 +268,7 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 
 	for (iter = pointHelperData->enabled.begin(); iter != pointHelperData->enabled.end(); iter++)
 	{
-
+		
 		// Check if drawable is enabled
 		//
 		drawable = this->drawables[iter->first];
@@ -286,7 +287,7 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 			continue;
 
 		}
-
+		
 	}
 
 	return pointHelperData;
@@ -375,7 +376,7 @@ This method is called after prepareForDraw() and carries the same restrictions o
 
 	// Check if text is valid
 	//
-	if (pointHelperData->currentText.length() > 0) 
+	if (pointHelperData->text.length() > 0) 
 	{
 
 		// Begin drawable
@@ -390,7 +391,7 @@ This method is called after prepareForDraw() and carries the same restrictions o
 
 		// Draw text
 		//
-		drawManager.text(MPoint::origin, pointHelperData->currentText, MHWRender::MUIDrawManager::TextAlignment::kCenter);
+		drawManager.text(MPoint::origin, pointHelperData->text, MHWRender::MUIDrawManager::TextAlignment::kCenter);
 
 		// End drawable
 		//
