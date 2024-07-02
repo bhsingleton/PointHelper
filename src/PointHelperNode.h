@@ -3,12 +3,13 @@
 //
 // File: PointHelperNode.h
 //
-// Dependency Graph Node: PointHelper
+// Dependency Graph Node: pointHelper
 //
 // Author: Ben Singleton
 //
 
 #include "Drawable.h"
+#include "PointHelperData.h"
 
 #include <maya/MPxLocatorNode.h>
 #include <maya/MObject.h>
@@ -61,6 +62,16 @@
 #include <assert.h>
 
 
+enum class Axis
+{
+
+	X = 0,
+	Y = 1,
+	Z = 2
+
+};
+
+
 class PointHelper : public MPxLocatorNode 
 {
 
@@ -74,6 +85,15 @@ public:
 
 	virtual	MStatus				preEvaluation(const MDGContext& context, const MEvaluationNode& evaluationNode);
 	virtual	void				getCacheSetup(const MEvaluationNode& evaluationNode, MNodeCacheDisablingInfo& disablingInfo, MNodeCacheSetupInfo& cacheSetupInfo, MObjectArray& monitoredAttributes) const;
+
+	virtual	bool				getInternalValue(const MPlug& plug, MDataHandle& handle);
+	virtual	bool				setInternalValue(const MPlug& plug, const MDataHandle& handle);
+	virtual int					internalArrayCount(const MPlug& plug) const;
+	virtual	void				copyInternalData(PointHelperData* data);
+
+	virtual	MStatus				setText(const unsigned int index, const MString& text);
+	virtual	MStatus				setControlPoint(const unsigned int index, const MVector& vector);
+	virtual	MStatus				setControlPoint(const unsigned int index, const Axis axis, const double value);
 
 	static	MMatrix				getMatrixData(const MObject& data);
 	virtual	MDagPath			thisMDagPath() const;
@@ -137,6 +157,26 @@ public:
 	static	MString				drawDbClassification;
 	static	MString				drawRegistrantId;
 	static	MTypeId				id;
+
+protected:
+			
+			double				sizeValue;
+			MVector				localPositionValue;
+			MVector				localRotateValue;
+			MVector				localScaleValue;
+
+			float				lineWidthValue;
+			bool				fillValue;
+			bool				shadedValue;
+			bool				drawOnTopValue;
+
+			MStringArray		textValues;
+			unsigned int		choiceValue;
+			unsigned int		fontSizeValue;
+
+			MVectorArray		controlPointValues;
+
+			std::map<std::string, bool>	drawables;
 
 };
 

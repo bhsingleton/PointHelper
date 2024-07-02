@@ -254,10 +254,10 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 		
 	}
 
-	// Cache internal values
+	// Copy internal values
 	//
-	pointHelperData->copyInternalData(objPath);
-	pointHelperData->copyObjectMatrix(objPath);
+	this->pointHelper->copyInternalData(pointHelperData);
+
 	pointHelperData->copyWireColor(objPath);
 	pointHelperData->copyDepthPriority(objPath);
 
@@ -266,7 +266,7 @@ It is invalid to pull data from the Maya dependency graph in the draw callback m
 	Drawable::AbstractDrawable* drawable;
 	std::map<std::string, bool>::iterator iter;
 
-	for (iter = pointHelperData->enabled.begin(); iter != pointHelperData->enabled.end(); iter++)
+	for (iter = pointHelperData->drawables.begin(); iter != pointHelperData->drawables.end(); iter++)
 	{
 		
 		// Check if drawable is enabled

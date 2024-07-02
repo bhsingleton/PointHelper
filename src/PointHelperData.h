@@ -7,7 +7,6 @@
 //
 
 #include "Drawable.h"
-#include "PointHelperNode.h"
 
 #include <maya/MUserData.h>
 #include <maya/MPlug.h>
@@ -38,35 +37,35 @@ class PointHelperData : public MUserData
 
 public:
 
-						PointHelperData();
-	virtual				~PointHelperData();
+							PointHelperData();
+	virtual					~PointHelperData();
 
-	virtual	MStatus		copyInternalData(const MDagPath& objPath);
-	virtual	MStatus		copyObjectMatrix(const MDagPath& objPath);
-	virtual	MStatus		copyWireColor(const MDagPath& objPath);
-	virtual	MStatus		copyDepthPriority(const MDagPath& dagPath);
+	virtual	MStatus			copyWireColor(const MDagPath& objPath);
+	virtual	MStatus			copyDepthPriority(const MDagPath& dagPath);
+
+	virtual	void			invalidate();
 
 public:
 			
-			std::map<std::string, bool>		enabled;
+			MVector			localPosition;
+			MVector			localRotate;
+			MVector			localScale;
+			double			size;
+			MMatrix			objectMatrix;
 
-			double							size;
-			MVector							localPosition;
-			MVector							localRotate;
-			MVector							localScale;
-			MMatrix							objectMatrix;
+			MString			text;
+			unsigned int	fontSize;
 
-			MString							text;
-			int								fontSize;
+			MColor			wireColor;
+			float			lineWidth;
+			bool			fill;
+			bool			shaded;
+			bool			drawOnTop;
+			unsigned int	depthPriority;
 
-			MColor							wireColor;
-			float							lineWidth;
-			bool							fill;
-			bool							shaded;
-			bool							drawOnTop;
-			unsigned int					depthPriority;
+			MVectorArray	controlPoints;
 
-			MVectorArray					controlPoints;
+			std::map<std::string, bool>	drawables;
 
 };
 #endif
