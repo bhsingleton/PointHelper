@@ -24,6 +24,7 @@
 #include <maya/MDagPath.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MString.h>
+#include <maya/MStringArray.h>
 #include <maya/MMatrix.h>
 #include <maya/MMatrixArray.h>
 #include <maya/MTransformationMatrix.h>
@@ -86,17 +87,20 @@ public:
 	virtual	MStatus				preEvaluation(const MDGContext& context, const MEvaluationNode& evaluationNode);
 	virtual	void				getCacheSetup(const MEvaluationNode& evaluationNode, MNodeCacheDisablingInfo& disablingInfo, MNodeCacheSetupInfo& cacheSetupInfo, MObjectArray& monitoredAttributes) const;
 
-	virtual	bool				getInternalValue(const MPlug& plug, MDataHandle& handle);
-	virtual	bool				setInternalValue(const MPlug& plug, const MDataHandle& handle);
-	virtual int					internalArrayCount(const MPlug& plug) const;
 	virtual	void				copyInternalData(PointHelperData* data);
-
-	virtual	MStatus				setText(const unsigned int index, const MString& text);
-	virtual	MStatus				setControlPoint(const unsigned int index, const MVector& vector);
-	virtual	MStatus				setControlPoint(const unsigned int index, const Axis axis, const double value);
-
+	static	MMatrix				getMatrixData(const MPlug& plug);
 	static	MMatrix				getMatrixData(const MObject& data);
+	static	bool				getBoolData(const MPlug& plug);
+	static	int					getIntData(const MPlug& plug);
+	static	float				getFloatData(const MPlug& plug);
+	static	double				getDoubleData(const MPlug& plug);
+	static	MVector				getVectorData(const MPlug& plug);
+	static	MVectorArray		getVectorArrayData(const MPlug& plug);
+	static	MString				getStringData(const MPlug& plug);
+	static	MStringArray		getStringArrayData(const MPlug& plug);
 	virtual	MDagPath			thisMDagPath() const;
+
+	virtual	std::map<std::string, bool>		drawables();
 
 	virtual	bool				isBounded() const;
 	virtual	MBoundingBox		boundingBox() const;
@@ -157,26 +161,6 @@ public:
 	static	MString				drawDbClassification;
 	static	MString				drawRegistrantId;
 	static	MTypeId				id;
-
-protected:
-			
-			double				sizeValue;
-			MVector				localPositionValue;
-			MVector				localRotateValue;
-			MVector				localScaleValue;
-
-			float				lineWidthValue;
-			bool				fillValue;
-			bool				shadedValue;
-			bool				drawOnTopValue;
-
-			MStringArray		textValues;
-			unsigned int		choiceValue;
-			unsigned int		fontSizeValue;
-
-			MVectorArray		controlPointValues;
-
-			std::map<std::string, bool>	drawables;
 
 };
 

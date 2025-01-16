@@ -26,6 +26,8 @@ Constructor.
 	this->drawOnTop = false;
 	this->depthPriority = 0;
 
+	this->texts = MStringArray();
+	this->choice = 0;
 	this->text = MString("");
 	this->fontSize = 11;
 

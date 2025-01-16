@@ -53,6 +53,8 @@ public:
 			double			size;
 			MMatrix			objectMatrix;
 
+			MStringArray	texts;
+			int				choice;
 			MString			text;
 			unsigned int	fontSize;
 
