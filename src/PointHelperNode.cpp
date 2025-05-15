@@ -584,7 +584,17 @@ Supplying a bounding box will make selection calculation more efficient!
 
 	// Transform bounding-box with object-matrix
 	//
-	MMatrix objectMatrix = PointHelper::getMatrixData(MPlug(this->thisMObject(), PointHelper::objectMatrix));
+	MVector localPosition = PointHelper::getVectorData(MPlug(this->thisMObject(), PointHelper::localPosition));
+	MVector localRotate = PointHelper::getVectorData(MPlug(this->thisMObject(), PointHelper::localRotate));
+	MVector localScale = PointHelper::getVectorData(MPlug(this->thisMObject(), PointHelper::localScale));
+	double size = PointHelper::getDoubleData(MPlug(this->thisMObject(), PointHelper::size));
+
+	MMatrix localPositionmatrix = Drawable::createPositionMatrix(localPosition);
+	MMatrix localRotateMatrix = Drawable::createRotationMatrix(localRotate);
+	MMatrix localScaleMatrix = Drawable::createScaleMatrix(localScale);
+	MMatrix sizeMatrix = Drawable::createScaleMatrix(size);
+	MMatrix objectMatrix = sizeMatrix * localScaleMatrix * localRotateMatrix * localPositionmatrix;
+
 	boundingBox.transformUsing(objectMatrix);
 
 	return boundingBox;

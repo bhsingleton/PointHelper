@@ -59,16 +59,18 @@ namespace Drawable
 	MMatrix			createPositionMatrix(const double x, const double y, const double z);
 	MMatrix			createPositionMatrix(const MVector& vector);
 	MMatrix			createPositionMatrix(const MPoint& point);
-
+	MMatrix			createPositionMatrix(const MMatrix& matrix);
 	
 	MMatrix			createRotationMatrix(const MVector& radians, const MEulerRotation::RotationOrder order);
 	MMatrix			createRotationMatrix(const MVector& radians, const MTransformationMatrix::RotationOrder order);
 	MMatrix			createRotationMatrix(const MVector& radians);
+	MMatrix			createRotationMatrix(const MMatrix& matrix);
 
 	MMatrix			createScaleMatrix(const double x, const double y, const double z);
 	MMatrix			createScaleMatrix(const double scale);
 	MMatrix			createScaleMatrix(const MVector& scale);
-	
+	MMatrix			createScaleMatrix(const MMatrix& matrix);
+
 	void			transform(const MMatrix& matrix, MPointArray& points);
 	MPointArray		transform(const MMatrix& matrix, const double points[][4], const int numPoints);
 	

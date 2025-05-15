@@ -364,6 +364,20 @@ Returns a position matrix from the supplied point.
 };
 
 
+MMatrix Drawable::createPositionMatrix(const MMatrix& matrix)
+/**
+Returns a position matrix from the supplied transform matrix.
+
+@param point: The transform matrix.
+@return: The position matrix.
+*/
+{
+
+	return Drawable::createPositionMatrix(matrix(3, 0), matrix(3, 1), matrix(3, 2));
+
+};
+
+
 MMatrix Drawable::createRotationMatrix(const MVector& radians, const MEulerRotation::RotationOrder order)
 /**
 Returns a rotation matrix from the supplied radians and rotation order.
@@ -402,6 +416,32 @@ Returns a rotation matrix from the supplied radians.
 {
 
 	return Drawable::createRotationMatrix(radians, MEulerRotation::kXYZ);
+
+};
+
+
+MMatrix Drawable::createRotationMatrix(const MMatrix& matrix)
+/**
+Returns a rotation matrix from the supplied transform matrix.
+
+@param radians: The transform matrix.
+@return: The rotation matrix.
+*/
+{
+
+	MVector xAxis = MVector(matrix(0, 0), matrix(0, 1), matrix(0, 2)).normal();
+	MVector yAxis = MVector(matrix(1, 0), matrix(1, 1), matrix(1, 2)).normal();
+	MVector zAxis = MVector(matrix(2, 0), matrix(2, 1), matrix(2, 2)).normal();
+
+	double rows[4][4] =
+	{
+		{ xAxis.x, xAxis.y, xAxis.z, 0.0 },
+		{ yAxis.x, yAxis.y, yAxis.z, 0.0 },
+		{ zAxis.x, zAxis.y, zAxis.z, 0.0 },
+		{ 0.0, 0.0, 0.0, 1.0 }
+	};
+
+	return MMatrix(rows);
 
 };
 
@@ -454,6 +494,24 @@ Returns a scale matrix from the supplied vector.
 {
 
 	return Drawable::createScaleMatrix(scale.x, scale.y, scale.z);
+
+};
+
+
+MMatrix Drawable::createScaleMatrix(const MMatrix& matrix)
+/**
+Returns a scale matrix from the supplied transform matrix.
+
+@param scale: The transform matrix.
+@return: The scale matrix.
+*/
+{
+
+	MVector xAxis = MVector(matrix(0, 0), matrix(0, 1), matrix(0, 2));
+	MVector yAxis = MVector(matrix(1, 0), matrix(1, 1), matrix(1, 2));
+	MVector zAxis = MVector(matrix(2, 0), matrix(2, 1), matrix(2, 2));
+
+	return Drawable::createScaleMatrix(xAxis.length(), yAxis.length(), zAxis.length());
 
 };
 
